@@ -2322,67 +2322,179 @@ const panelDescriptions = {
 };
 
 // 9. Localization Translation Dictionary
-const translations = {
+
+const i18nDict = {
     en: {
         app_title: "Nashville House ERP",
-        p_residence: "Residence Support & Clearances",
+        nav_search: "Search anything across 68 modules (Ctrl + K)...",
+        nav_notifications: "Notifications",
+        nav_quick_add: "+ Quick Action",
+        nav_user_role: "Co-Owner & Admin",
+        sidebar_sections: "OPERATIONAL PANELS",
         btn_add_record: "+ Add Record",
-        col_code: "CLEARANCE #",
-        col_send_to: "DIRECTIVE ROUTING",
-        col_tenant: "RESIDENT / TENANT",
-        col_origin: "RESIDENCY STATUS",
-        col_owner: "PROPERTY OWNER",
-        col_prev_tenant: "PREVIOUS TENANT",
-        col_scans: "DOCUMENTS",
-        col_status: "STATUS",
-        col_actions: "ACTIONS",
-        card_total: "TOTAL CLEARANCES",
-        card_verified: "ACTIVE & VERIFIED",
-        card_pending: "PENDING REVIEW",
-        card_docs: "ATTACHMENTS"
+        btn_export_excel: "Export Excel",
+        btn_print_table: "Print Table",
+        btn_save: "Save Record",
+        btn_cancel: "Cancel",
+        btn_close: "Close",
+        btn_choose_file: "Choose File",
+        status_active: "Active",
+        status_pending: "Pending",
+        status_completed: "Completed",
+        status_verified: "Verified",
+        status_paid: "Paid",
+        status_open: "Open",
+        no_records_found: "No records found in this panel yet.",
+        click_add_prompt: "Click + Add Record to create your first entry.",
+        live_db_synced: "Live Database Synced",
+        // Category Headings
+        cat_core_ops: "📌 1. CORE OPERATIONS",
+        cat_finance: "💰 2. FINANCE & TREASURY",
+        cat_people: "👥 3. CLIENT CRM & PEOPLE",
+        cat_properties_facility: "🏢 4. PROPERTIES & FACILITY",
+        cat_utilities: "⚡ 5. UTILITIES & BILLS",
+        cat_legal: "⚖️ 6. LEGAL & DEEDS",
+        cat_communications: "📱 7. COMMUNICATIONS",
+        cat_reports: "📈 8. REPORTS",
+        cat_admin: "⚙️ 9. ADMINISTRATION",
+        // Residence Form Labels
+        m_send_to: "Send To (Directive Routing)",
+        m_tenant_info: "Resident / Tenant Information",
+        m_owner_info: "Property Owner Information",
+        m_prev_tenant: "Previous Tenant Details",
+        m_files: "Files & Documents",
+        lbl_tenant_name: "Tenant / Resident Name",
+        lbl_origin: "Residency Status / Origin",
+        lbl_owner_name: "Property Owner Name",
+        lbl_phone: "Phone Number",
+        lbl_ethnicity: "Ethnicity / Nationality",
+        lbl_current_loc: "Location / Apartment",
+        lbl_notes: "Additional Notes",
+        // Modal Titles
+        title_add_residence: "Add Residence Clearance Record",
+        title_dyn_entry: "Add New Record",
+        title_provision_user: "Provision User / Adjust Role",
+        title_logo_manager: "Corporate Logo & Branding",
+        title_dev_master: "Developer Root Terminal"
     },
     ar: {
         app_title: "ناشفيل هاوس ERP",
-        p_residence: "تأييدات السكن والموافقات الأمنية",
+        nav_search: "بحث في كافة الأقسام ٦٨ (Ctrl + K)...",
+        nav_notifications: "الإشعارات والتنبيهات",
+        nav_quick_add: "+ إجراء سريع",
+        nav_user_role: "مالك وإداري عام",
+        sidebar_sections: "أقسام العمليات والتطبيقات",
         btn_add_record: "+ إضافة قيد جديد",
-        col_code: "رمز التأييد",
-        col_send_to: "الجهة الصادر إليها",
-        col_tenant: "اسم الساكن / المستأجر",
-        col_origin: "صفة الإقامة",
-        col_owner: "مالك العقار",
-        col_prev_tenant: "الساكن السابق",
-        col_scans: "المستندات",
-        col_status: "الحالة",
-        col_actions: "الإجراءات",
-        card_total: "إجمالي التأييدات",
-        card_verified: "الموافقات المفعلة",
-        card_pending: "قيد المراجعة",
-        card_docs: "الملفات والوثائق"
+        btn_export_excel: "تصدير إكسل",
+        btn_print_table: "طباعة الجدول",
+        btn_save: "حفظ البيانات",
+        btn_cancel: "إلغاء",
+        btn_close: "إغلاق",
+        btn_choose_file: "اختر ملفاً",
+        status_active: "نشط ومفعل",
+        status_pending: "قيد الانتظار",
+        status_completed: "مكتمل",
+        status_verified: "مصدق وأمني",
+        status_paid: "مدفوع بالكامل",
+        status_open: "مفتوح",
+        no_records_found: "لا توجد سجلات في هذا القسم حالياً.",
+        click_add_prompt: "اضغط على + إضافة قيد جديد لإنشاء أول سجل.",
+        live_db_synced: "قاعدة البيانات متزامنة فوراً",
+        // Category Headings
+        cat_core_ops: "📌 ١. العمليات والتصاريح الأساسية",
+        cat_finance: "💰 ٢. المالية والخدمات الخزنية",
+        cat_people: "👥 ٣. إدارة العملاء والسجلات",
+        cat_properties_facility: "🏢 ٤. العقارات والمشاريع والخدمات",
+        cat_utilities: "⚡ ٥. الفواتير والخدمات والضرائب",
+        cat_legal: "⚖️ ٦. الشؤون القانونية والطابو",
+        cat_communications: "📱 ٧. المراسلات والملفات",
+        cat_reports: "📈 ٨. التقارير والتحليلات",
+        cat_admin: "⚙️ ٩. الإدارة والإعدادات العامة",
+        // Residence Form Labels
+        m_send_to: "الجهة الصادر إليها (التوجيه)",
+        m_tenant_info: "بيانات الساكن / المستأجر",
+        m_owner_info: "بيانات مالك العقار",
+        m_prev_tenant: "تفاصيل الساكن السابق",
+        m_files: "الملفات والوثائق الرسمية",
+        lbl_tenant_name: "اسم الساكن / المستأجر",
+        lbl_origin: "صفة الإقامة / الأصل",
+        lbl_owner_name: "اسم مالك العقار",
+        lbl_phone: "رقم الهاتف",
+        lbl_ethnicity: "القومية / الجنسية",
+        lbl_current_loc: "الموقع / الشقة",
+        lbl_notes: "ملاحظات إضافية",
+        // Modal Titles
+        title_add_residence: "إضافة قيد تأييد سكن جديد",
+        title_dyn_entry: "إضافة سجل جديد",
+        title_provision_user: "إدارة واستحداث مستخدم جديد",
+        title_logo_manager: "إدارة الشعار والهوية المؤسسية",
+        title_dev_master: "لوحة المطور الرئيسية"
     },
     ku: {
         app_title: "ناشفیل هاوس ERP",
-        p_residence: "پشتگیری نیشتەجێبوون و ڕەزامەندی",
+        nav_search: "گەڕان لە هەموو ٦٨ بەشەکەدا (Ctrl + K)...",
+        nav_notifications: "ئاگادارییەکان",
+        nav_quick_add: "+ کرداری خێرا",
+        nav_user_role: "هاوبەش و بەڕێوەبەری سەرەکی",
+        sidebar_sections: "بەشەکانی بەڕێوەبردن",
         btn_add_record: "+ زیادکردنی تۆماری نوێ",
-        col_code: "کۆدی پشتگیری",
-        col_send_to: "ئاڕاستەکراو بۆ",
-        col_tenant: "ناوی نیشتەجێ / کرێچی",
-        col_origin: "دۆخی نیشتەجێبوون",
-        col_owner: "خاوەنی مڵک",
-        col_prev_tenant: "کرێچی پێشوو",
-        col_scans: "بەڵگەنامەکان",
-        col_status: "دۆخ",
-        col_actions: "کردارەکان",
-        card_total: "کۆی گشتی پشتگیرییەکان",
-        card_verified: "پەسەندکراو و چالاک",
-        card_pending: "لە چاوەڕوانیدا",
-        card_docs: "بەڵگەنامە هاوپێچەکان"
+        btn_export_excel: "داگرتنی ئێکسڵ",
+        btn_print_table: "چاپکردنی خشتە",
+        btn_save: "تۆمارکردن",
+        btn_cancel: "پاشگەزبوونەوە",
+        btn_close: "داخستن",
+        btn_choose_file: "فایلێک هەڵبژێرە",
+        status_active: "چالاک",
+        status_pending: "لە چاوەڕوانیدا",
+        status_completed: "تەواوبوو",
+        status_verified: "پەسەندکراو",
+        status_paid: "دراوە",
+        status_open: "کراوەیە",
+        no_records_found: "هیچ تۆمارێک لەم بەشەدا نییە.",
+        click_add_prompt: "کلیک لەسەر + زیادکردنی تۆماری نوێ بکە بۆ دروستکردن.",
+        live_db_synced: "داتابەیس ڕاستەوخۆ هاوکاتکراوە",
+        // Category Headings
+        cat_core_ops: "📌 ١. کارە سەرەکییەکان و پەسەندکردن",
+        cat_finance: "💰 ٢. دارایی و قاسەی ناوەندی",
+        cat_people: "👥 ٣. کڕیاران و پەیوەندییەکان",
+        cat_properties_facility: "🏢 ٤. مڵکەکان، پڕۆژە و خزمەتگوزاری",
+        cat_utilities: "⚡ ٥. پسوڵەکان، کارهەبا و باج",
+        cat_legal: "⚖️ ٦. یاسایی، وەقالەت و تاپۆ",
+        cat_communications: "📱 ٧. نامەکان، واتسئاپ و فایلەکان",
+        cat_reports: "📈 ٨. ڕاپۆرتەکان و شیکاری گشتی",
+        cat_admin: "⚙️ ٩. الإدارة و ڕێکخستنی سەرەکی",
+        // Residence Form Labels
+        m_send_to: "ئاراستەکراو بۆ (ڕێنمایی)",
+        m_tenant_info: "زانیاری نیشتەجێ / کرێچی",
+        m_owner_info: "زانیاری خاوەنی مڵک",
+        m_prev_tenant: "وردەکاری کرێچی پێشوو",
+        m_files: "فایل و بەڵگەنامەکان",
+        lbl_tenant_name: "ناوی نیشتەجێ / کرێچی",
+        lbl_origin: "دۆخی نیشتەجێبوون",
+        lbl_owner_name: "ناوی خاوەنی مڵک",
+        lbl_phone: "ژمارەی تەلەفۆن",
+        lbl_ethnicity: "نەتەوە / ڕەگەزنامە",
+        lbl_current_loc: "شوێن / یەکە",
+        lbl_notes: "تێبینی زیاتر",
+        // Modal Titles
+        title_add_residence: "زیادکردنی تۆماری پشتگیری نیشتەجێبوون",
+        title_dyn_entry: "زیادکردنی تۆماری نوێ",
+        title_provision_user: "زیادکردن یان دەستکاریکردنی بەکارهێنەر",
+        title_logo_manager: "ڕێکخستنی لۆگۆ و براندینگ",
+        title_dev_master: "ترمی ناڵی گەشەپێدەر"
     }
 };
 
+
+
+const translations = i18nDict;
+
 function setLanguage(lang) {
+    if (!['en', 'ar', 'ku'].includes(lang)) lang = 'en';
     currentLanguage = lang;
     try { localStorage.setItem(STORAGE_KEY_LANG, lang); } catch (e) {}
 
+    // Update active language button styles
     ['en', 'ar', 'ku'].forEach(l => {
         const btn = document.getElementById('lang-btn-' + l);
         if (btn) {
@@ -2390,6 +2502,7 @@ function setLanguage(lang) {
         }
     });
 
+    // Update document direction and lang
     if (lang === 'ar' || lang === 'ku') {
         document.documentElement.dir = 'rtl';
         document.documentElement.lang = lang;
@@ -2398,8 +2511,60 @@ function setLanguage(lang) {
         document.documentElement.lang = 'en';
     }
 
+    // 1. Translate all DOM elements with data-i18n
+    const dict = i18nDict[lang] || i18nDict['en'];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el.placeholder = dict[key];
+            } else {
+                el.innerText = dict[key];
+            }
+        }
+    });
+
+    // 2. Translate search bar placeholder
+    const searchInput = document.getElementById('global-search-input');
+    if (searchInput) {
+        searchInput.placeholder = dict.nav_search || "Search across 68 modules...";
+    }
+
+    // 3. Translate all sidebar panel names
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const panelKey = link.getAttribute('data-target');
+        if (panelKey && sidebarPanelNames[panelKey]) {
+            const span = link.querySelector('span');
+            if (span) {
+                span.innerText = sidebarPanelNames[panelKey][lang] || sidebarPanelNames[panelKey]['en'] || panelKey;
+            }
+        }
+    });
+
+    // 4. Translate sidebar category group headings
+    const groupHeadings = {
+        'cat_core_ops': { en: '📌 1. CORE OPERATIONS', ar: '📌 ١. العمليات والتصاريح الأساسية', ku: '📌 ١. کارە سەرەکییەکان و پەسەندکردن' },
+        'cat_finance': { en: '💰 2. FINANCE & TREASURY', ar: '💰 ٢. المالية والقاصة', ku: '💰 ٢. دارایی و قاسە' },
+        'cat_people': { en: '👥 3. CLIENT CRM & PEOPLE', ar: '👥 ٣. إدارة العملاء و CRM', ku: '👥 ٣. کڕیاران و پەیوەندییەکان' },
+        'cat_properties_facility': { en: '🏢 4. PROPERTIES & FACILITY', ar: '🏢 ٤. العقارات والمشاريع والخدمات', ku: '🏢 ٤. مڵکەکان، پڕۆژە و خزمەتگوزاری' },
+        'cat_utilities': { en: '⚡ 5. UTILITIES & BILLS', ar: '⚡ ٥. الفواتير والخدمات والضرائب', ku: '⚡ ٥. پسوڵەکان، کارهەبا و باج' },
+        'cat_legal': { en: '⚖️ 6. LEGAL & DEEDS', ar: '⚖️ ٦. الشؤون القانونية والطابو', ku: '⚖️ ٦. یاسایی، وەقالەت و تاپۆ' },
+        'cat_communications': { en: '📱 7. COMMUNICATIONS', ar: '📱 ٧. المراسلات والملفات', ku: '📱 ٧. نامەکان، واتسئاپ و فایلەکان' },
+        'cat_reports': { en: '📈 8. REPORTS', ar: '📈 ٨. التقارير والتحليلات', ku: '📈 ٨. ڕاپۆرتەکان و شیکاری گشتی' },
+        'cat_admin': { en: '⚙️ 9. ADMINISTRATION', ar: '⚙️ ٩. الإدارة والإعدادات', ku: '⚙️ ٩. الإدارة و ڕێکخستن' }
+    };
+
+    document.querySelectorAll('[data-category-heading]').forEach(el => {
+        const catKey = el.getAttribute('data-category-heading');
+        if (groupHeadings[catKey]) {
+            el.innerText = groupHeadings[catKey][lang] || groupHeadings[catKey]['en'];
+        }
+    });
+
+    // 5. Re-render current active view with full localized templates
     renderCurrentView();
 }
+
 
 // 10. Theme Switcher
 function selectTheme(themeName) {
