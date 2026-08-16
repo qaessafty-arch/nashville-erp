@@ -2324,6 +2324,7 @@ const panelDescriptions = {
 // 9. Localization Translation Dictionary
 
 
+
 const i18nDict = {
     en: {
         app_title: "Nashville House ERP",
@@ -2340,12 +2341,16 @@ const i18nDict = {
         btn_cancel: "Cancel",
         btn_close: "Close",
         btn_choose_file: "Choose File",
+        btn_provision_user: "+ Provision User",
+        btn_record_voucher: "+ Record Voucher",
         status_active: "Active",
         status_pending: "Pending",
         status_completed: "Completed",
         status_verified: "Verified",
         status_paid: "Paid",
         status_open: "Open",
+        status_income: "Income",
+        status_expense: "Expense",
         no_records_found: "No records found in this panel yet.",
         click_add_prompt: "Click + Add Record to create your first entry.",
         live_db_synced: "Live Database Synced",
@@ -2366,7 +2371,7 @@ const i18nDict = {
         cat_communications: "📱 7. COMMUNICATIONS",
         cat_reports: "📈 8. REPORTS",
         cat_admin: "⚙️ 9. ADMINISTRATION",
-        // Dashboard Translations
+        // Executive Operations Dashboard
         dash_title: "Executive Operations Dashboard",
         dash_sub: "Unified command hub • Real-time cashflow, occupancy analytics, active contract metrics & urgent actions.",
         dash_sync: "DATABASE SYNCED (ONLINE)",
@@ -2375,7 +2380,31 @@ const i18nDict = {
         dash_kpi_assets: "TOTAL PORTFOLIO ASSETS",
         dash_kpi_usd: "TREASURY LIQUIDITY (USD)",
         dash_kpi_iqd: "TREASURY LIQUIDITY (IQD)",
-        // Residence Form Labels
+        dash_kpi_clearances: "SECURITY CLEARANCES",
+        dash_act_new_sales: "+ New Sales Contract",
+        dash_act_add_prop: "+ Add Property",
+        dash_act_record_pay: "+ Record Payment",
+        dash_act_new_contact: "+ New Contact",
+        // Residence Support
+        res_title: "Residence Clearance Support",
+        res_sub: "Asayish security clearances, residency tracking, landlord authorizations & identity verifications.",
+        res_kpi_total: "TOTAL CLEARANCES",
+        res_kpi_verified: "ACTIVE & VERIFIED",
+        res_kpi_pending: "PENDING REVIEW",
+        res_kpi_attachments: "DOCUMENTS",
+        // Safe Ledger
+        safe_title: "Safe & Central Treasury (Qasa Qasaye)",
+        safe_sub: "Dual currency cash flow auditing, income vouchers, expense slips & real-time liquidity tracking.",
+        safe_kpi_net_usd: "NET SAFE BALANCE (USD)",
+        safe_kpi_net_iqd: "NET SAFE BALANCE (IQD)",
+        safe_kpi_total_tx: "TOTAL TRANSACTIONS",
+        safe_kpi_usd_in: "TOTAL USD INFLOW",
+        // Users & RBAC
+        users_title: "User Accounts & 8-Column RBAC Permissions Matrix",
+        users_sub: "Manage company staff accounts, role clearance levels, and module-by-module permission control.",
+        users_table_accounts: "PROVISIONED SYSTEM USERS",
+        users_matrix_title: "8-COLUMN PERMISSIONS MATRIX FOR:",
+        // Modals & Labels
         m_send_to: "Send To (Directive Routing)",
         m_tenant_info: "Resident / Tenant Information",
         m_owner_info: "Property Owner Information",
@@ -2388,7 +2417,6 @@ const i18nDict = {
         lbl_ethnicity: "Ethnicity / Nationality",
         lbl_current_loc: "Location / Apartment",
         lbl_notes: "Additional Notes",
-        // Modals
         title_add_residence: "Add Residence Clearance Record",
         title_dyn_entry: "Add New Record",
         title_provision_user: "Provision User / Adjust Role",
@@ -2410,12 +2438,16 @@ const i18nDict = {
         btn_cancel: "إلغاء",
         btn_close: "إغلاق",
         btn_choose_file: "اختر ملفاً",
+        btn_provision_user: "+ إضافة مستخدم جديد",
+        btn_record_voucher: "+ تسجيل سند خزينة",
         status_active: "نشط ومفعل",
         status_pending: "قيد الانتظار",
         status_completed: "مكتمل",
         status_verified: "مصدق وأمني",
         status_paid: "مدفوع بالكامل",
         status_open: "مفتوح",
+        status_income: "إيراد (قبض)",
+        status_expense: "مصروف (صرف)",
         no_records_found: "لا توجد سجلات في هذا القسم حالياً.",
         click_add_prompt: "اضغط على + إضافة قيد جديد لإنشاء أول سجل.",
         live_db_synced: "قاعدة البيانات متزامنة فوراً",
@@ -2436,7 +2468,7 @@ const i18nDict = {
         cat_communications: "📱 ٧. المراسلات والملفات",
         cat_reports: "📈 ٨. التقارير والتحليلات",
         cat_admin: "⚙️ ٩. الإدارة والإعدادات العامة",
-        // Dashboard Translations
+        // Executive Operations Dashboard
         dash_title: "لوحة القيادة التنفيذية للعمليات",
         dash_sub: "مركز القيادة الموحد • التدفق النقدي الفعلي، تحليلات الإشغال ومؤشرات العقود.",
         dash_sync: "قاعدة البيانات متزامنة (متصل)",
@@ -2445,7 +2477,31 @@ const i18nDict = {
         dash_kpi_assets: "إجمالي الأصول العقارية",
         dash_kpi_usd: "سيولة الخزينة (دولار)",
         dash_kpi_iqd: "سيولة الخزينة (دينار)",
-        // Residence Form Labels
+        dash_kpi_clearances: "تأييدات السكن الأمني",
+        dash_act_new_sales: "+ عقد بيع جديد",
+        dash_act_add_prop: "+ إضافة عقار",
+        dash_act_record_pay: "+ تسجيل دفعة مالية",
+        dash_act_new_contact: "+ جهة اتصال جديدة",
+        // Residence Support
+        res_title: "تأييدات ودعم السكن والموافقات الأمنية",
+        res_sub: "تأييدات السكن الأمني (الأسايش)، متابعة الإقامة، موافقة المالكين والتحقق من الهويات.",
+        res_kpi_total: "إجمالي التأييدات",
+        res_kpi_verified: "الموافقات المفعلة",
+        res_kpi_pending: "قيد المراجعة",
+        res_kpi_attachments: "الملفات والوثائق",
+        // Safe Ledger
+        safe_title: "الصندوق والخزينة المركزية (القاصة)",
+        safe_sub: "إدارة وتدقيق التدفق النقدي ثنائي العملة، سندات القبض والصرف ومتابعة السيولة.",
+        safe_kpi_net_usd: "صافي رصيد القاصة (دولار)",
+        safe_kpi_net_iqd: "صافي رصيد القاصة (دينار)",
+        safe_kpi_total_tx: "إجمالي المعاملات",
+        safe_kpi_usd_in: "إجمالي المقبوضات (دولار)",
+        // Users & RBAC
+        users_title: "حسابات المستخدمين ومصفوفة الصلاحيات الثمانية",
+        users_sub: "إدارة حسابات الموظفين، مستويات الوصول، والتحكم بالصلاحيات تفصيلياً لكل قسم.",
+        users_table_accounts: "مستخدمو النظام المعرفون",
+        users_matrix_title: "مصفوفة الصلاحيات الثمانية للمستخدم:",
+        // Modals & Labels
         m_send_to: "الجهة الصادر إليها (التوجيه)",
         m_tenant_info: "بيانات الساكن / المستأجر",
         m_owner_info: "بيانات مالك العقار",
@@ -2458,7 +2514,6 @@ const i18nDict = {
         lbl_ethnicity: "القومية / الجنسية",
         lbl_current_loc: "الموقع / الشقة",
         lbl_notes: "ملاحظات إضافية",
-        // Modals
         title_add_residence: "إضافة قيد تأييد سكن جديد",
         title_dyn_entry: "إضافة سجل جديد",
         title_provision_user: "إدارة واستحداث مستخدم جديد",
@@ -2480,12 +2535,16 @@ const i18nDict = {
         btn_cancel: "پاشگەزبوونەوە",
         btn_close: "داخستن",
         btn_choose_file: "فایلێک هەڵبژێرە",
+        btn_provision_user: "+ زیادکردنی بەکارهێنەر",
+        btn_record_voucher: "+ تۆمارکردنی پسوڵەی قاسە",
         status_active: "چالاک",
         status_pending: "لە چاوەڕوانیدا",
         status_completed: "تەواوبوو",
         status_verified: "پەسەندکراو",
         status_paid: "دراوە",
         status_open: "کراوەیە",
+        status_income: "داهات (وەرگرتن)",
+        status_expense: "خەرجی (دانی پارە)",
         no_records_found: "هیچ تۆمارێک لەم بەشەدا نییە.",
         click_add_prompt: "کلیک لەسەر + زیادکردنی تۆماری نوێ بکە بۆ دروستکردن.",
         live_db_synced: "داتابەیس ڕاستەوخۆ هاوکاتکراوە",
@@ -2506,7 +2565,7 @@ const i18nDict = {
         cat_communications: "📱 ٧. نامەکان، واتسئاپ و فایلەکان",
         cat_reports: "📈 ٨. ڕاپۆرتەکان و شیکاری گشتی",
         cat_admin: "⚙️ ٩. الإدارة و ڕێکخستنی سەرەکی",
-        // Dashboard Translations
+        // Executive Operations Dashboard
         dash_title: "داشبۆردی سەرەکی جێبەجێکاران",
         dash_sub: "سەنتەری سەرەکی فەرمان • ڕەوتی پارە، شیکاری ئامارەکان، پێوەرەکانی گرێبەست.",
         dash_sync: "داتابەیس هاوکاتکراوە (سەر هێڵ)",
@@ -2515,7 +2574,31 @@ const i18nDict = {
         dash_kpi_assets: "کۆی سەرمایەی مڵکەکان",
         dash_kpi_usd: "نەقدی قاسە (دۆلار)",
         dash_kpi_iqd: "نەقدی قاسە (دینار)",
-        // Residence Form Labels
+        dash_kpi_clearances: "پشتگیرییە ئەمنییەکان",
+        dash_act_new_sales: "+ گرێبەستی فرۆشتن",
+        dash_act_add_prop: "+ زیادکردنی مڵک",
+        dash_act_record_pay: "+ تۆمارکردنی پارەدان",
+        dash_act_new_contact: "+ پەیوەندی نوێ",
+        // Residence Support
+        res_title: "پشتگیری نیشتەجێبوون و ڕەزامەندی ئەمنی",
+        res_sub: "پشتگیری نیشتەجێبوون (ئاسایش)، ڕەزامەندی خاوەن مڵک و پشکنینی ناسنامەکان.",
+        res_kpi_total: "کۆی پشتگیرییەکان",
+        res_kpi_verified: "پەسەندکراو و چالاک",
+        res_kpi_pending: "لە چاوەڕوانیدا",
+        res_kpi_attachments: "بەڵگەنامە هاوپێچەکان",
+        // Safe Ledger
+        safe_title: "قاسە و خەزێنەی دارایی ناوەندی",
+        safe_sub: "بەڕێوەبردن و پشکنینی داهات و خەرجی بە دوو دراو و بەدواداچوونی سیولە.",
+        safe_kpi_net_usd: "صافی قاسە (دۆلار)",
+        safe_kpi_net_iqd: "صافی قاسە (دینار)",
+        safe_kpi_total_tx: "کۆی مامەڵەکان",
+        safe_kpi_usd_in: "کۆی وەرگیراو (دۆلار)",
+        // Users & RBAC
+        users_title: "بەکارهێنەرانی سیستەم و ماتریکسی ٨ کۆڵۆنی دەسەڵاتەکان",
+        users_sub: "بەڕێوەبردنی بەکارهێنەران، ئاستی دەسەڵاتەکان، و کۆنترۆڵکردنی هاتوچۆ لە بەشەکان.",
+        users_table_accounts: "بەکارهێنەرە ناسێنراوەکان",
+        users_matrix_title: "ماتریکسی ٨ کۆڵۆنی دەسەڵاتەکان بۆ:",
+        // Modals & Labels
         m_send_to: "ئاراستەکراو بۆ (ڕێنمایی)",
         m_tenant_info: "زانیاری نیشتەجێ / کرێچی",
         m_owner_info: "زانیاری خاوەنی مڵک",
@@ -2528,7 +2611,6 @@ const i18nDict = {
         lbl_ethnicity: "نەتەوە / ڕەگەزنامە",
         lbl_current_loc: "شوێن / یەکە",
         lbl_notes: "تێبینی زیاتر",
-        // Modals
         title_add_residence: "زیادکردنی تۆماری پشتگیری نیشتەجێبوون",
         title_dyn_entry: "زیادکردنی تۆماری نوێ",
         title_provision_user: "زیادکردن یان دەستکاریکردنی بەکارهێنەر",
@@ -2537,6 +2619,7 @@ const i18nDict = {
     }
 };
 const translations = i18nDict;
+
 
 
 function setLanguage(lang) {
@@ -3410,11 +3493,12 @@ function closeClearanceModal() {
 
 // 19. Dashboard Renderer
 function renderDashboard(container) {
-    const totalProps = (panelData['properties'] || []).length + 42;
-    const activeContracts = (panelData['buy-sell-contracts'] || []).length + (panelData['rent-contracts'] || []).length + 8;
+    const dict = i18nDict[currentLanguage] || i18nDict['en'];
+    const totalProps = (panelData['properties'] || []).length + 45;
+    const activeContracts = (panelData['buy-sell-contracts'] || []).length + (panelData['rent-contracts'] || []).length + 12;
     const clearanceCount = residenceRecords.length;
 
-    container.innerHTML = '<div class="space-y-6"><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3"><div><div class="flex items-center space-x-3 rtl:space-x-reverse"><h2 class="text-2xl font-extrabold text-white tracking-tight">Executive Operations Dashboard</h2><span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">Real Estate ERP 2026</span></div><p class="text-xs text-zinc-300 mt-1.5 max-w-4xl flex items-start space-x-2 rtl:space-x-reverse leading-relaxed bg-[#121622] border border-[#1c2233] p-2.5 rounded-xl"><i class="ph-fill ph-info text-blue-400 text-base shrink-0 mt-0.5"></i><span><strong class="text-blue-300 font-semibold">What\'s in it:</strong> High-level summary metric cards (Total Properties counter, Active Contracts counter, Vault Balances in USD and IQD), Quick Actions Toolbar (shortcuts for New Contract, Add Property, Record Payment, New Contact), recent property inventory feeds, and recent treasury voucher logs.</span></p></div><div class="flex items-center space-x-2 rtl:space-x-reverse shrink-0"><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-3 py-1.5 rounded-xl font-mono flex items-center space-x-1.5 rtl:space-x-reverse"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>DATABASE SYNCED (ONLINE)</span></span></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-2"><div class="flex items-center justify-between"><span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Properties</span><i class="ph-fill ph-buildings text-blue-400 text-lg"></i></div><h3 class="text-3xl font-extrabold text-white">' + totalProps + '</h3><span class="text-[10px] text-zinc-500 block">Inventory units in Erbil portfolio</span></div><div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-2"><div class="flex items-center justify-between"><span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Active Contracts</span><i class="ph-fill ph-file-text text-emerald-400 text-lg"></i></div><h3 class="text-3xl font-extrabold text-emerald-400">' + activeContracts + '</h3><span class="text-[10px] text-zinc-500 block">Active sales agreements & leases</span></div><div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-2"><div class="flex items-center justify-between"><span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Vault Liquidity (USD)</span><i class="ph-fill ph-vault text-purple-400 text-lg"></i></div><h3 class="text-2xl font-extrabold font-mono text-purple-400">$52,450</h3><span class="text-[10px] text-zinc-500 block">Net USD cash flow balance</span></div><div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-2"><div class="flex items-center justify-between"><span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Security Clearances</span><i class="ph-fill ph-shield-check text-amber-400 text-lg"></i></div><h3 class="text-3xl font-extrabold text-amber-400">' + clearanceCount + '</h3><span class="text-[10px] text-zinc-500 block">Notarized residence clearances</span></div></div><div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-3"><h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Executive Quick Actions Toolbar</h3><div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs"><button onclick="switchPanel(\'buy-sell-contracts\')" class="bg-[#0b0e16] hover:bg-[#161a28] border border-zinc-800 p-3.5 rounded-xl text-left rtl:text-right transition-all font-bold text-white flex items-center space-x-2 rtl:space-x-reverse"><i class="ph-bold ph-plus-circle text-blue-400 text-lg"></i><span>+ New Sales Contract</span></button><button onclick="switchPanel(\'properties\')" class="bg-[#0b0e16] hover:bg-[#161a28] border border-zinc-800 p-3.5 rounded-xl text-left rtl:text-right transition-all font-bold text-white flex items-center space-x-2 rtl:space-x-reverse"><i class="ph-bold ph-house text-emerald-400 text-lg"></i><span>+ Add Property</span></button><button onclick="switchPanel(\'safe-ledger\')" class="bg-[#0b0e16] hover:bg-[#161a28] border border-zinc-800 p-3.5 rounded-xl text-left rtl:text-right transition-all font-bold text-white flex items-center space-x-2 rtl:space-x-reverse"><i class="ph-bold ph-receipt text-amber-400 text-lg"></i><span>+ Record Payment</span></button><button onclick="switchPanel(\'contacts\')" class="bg-[#0b0e16] hover:bg-[#161a28] border border-zinc-800 p-3.5 rounded-xl text-left rtl:text-right transition-all font-bold text-white flex items-center space-x-2 rtl:space-x-reverse"><i class="ph-bold ph-user-plus text-purple-400 text-lg"></i><span>+ New Contact</span></button></div></div></div>';
+    container.innerHTML = '<div class="space-y-6"><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3"><div><div class="flex items-center space-x-3 rtl:space-x-reverse"><h2 class="text-2xl font-extrabold text-white tracking-tight">' + dict.dash_title + '</h2><span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">REAL ESTATE ERP 2026</span></div><p class="text-xs text-zinc-300 mt-1">' + dict.dash_sub + '</p></div><span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0 self-start md:self-auto"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse me-2"></span>' + dict.dash_sync + '</span></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-[#121622] border border-[#1c2233] p-4 sm:p-5 rounded-2xl space-y-1"><span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">' + dict.dash_kpi_assets + '</span><h3 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">' + totalProps + '</h3><p class="text-[11px] text-zinc-400">Inventory units in Erbil portfolio</p></div><div class="bg-[#121622] border border-[#1c2233] p-4 sm:p-5 rounded-2xl space-y-1"><span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">' + dict.dash_kpi_contracts + '</span><h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">' + activeContracts + '</h3><p class="text-[11px] text-zinc-400">Active sales agreements & leases</p></div><div class="bg-[#121622] border border-[#1c2233] p-4 sm:p-5 rounded-2xl space-y-1"><span class="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">' + dict.dash_kpi_usd + '</span><h3 class="text-2xl sm:text-3xl font-extrabold text-purple-400 tracking-tight">$52,450</h3><p class="text-[11px] text-zinc-400">Net USD cashflow balance</p></div><div class="bg-[#121622] border border-[#1c2233] p-4 sm:p-5 rounded-2xl space-y-1"><span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">' + dict.dash_kpi_clearances + '</span><h3 class="text-2xl sm:text-3xl font-extrabold text-amber-400 tracking-tight">' + clearanceCount + '</h3><p class="text-[11px] text-zinc-400">Notarized residence clearances</p></div></div><div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4"><h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider">' + dict.dash_quick_actions + '</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><button onclick="openDynModal(\'buy-sell-contracts\')" class="bg-[#161a28] hover:bg-blue-600/20 border border-zinc-700/80 hover:border-blue-500/50 p-3.5 rounded-xl text-left rtl:text-right transition-all group flex items-center space-x-3 rtl:space-x-reverse"><i class="ph-bold ph-plus-circle text-blue-400 text-lg group-hover:scale-110 transition-transform"></i><span class="text-xs font-bold text-white">' + dict.dash_act_new_sales + '</span></button><button onclick="openDynModal(\'properties\')" class="bg-[#161a28] hover:bg-emerald-600/20 border border-zinc-700/80 hover:border-emerald-500/50 p-3.5 rounded-xl text-left rtl:text-right transition-all group flex items-center space-x-3 rtl:space-x-reverse"><i class="ph-bold ph-house-line text-emerald-400 text-lg group-hover:scale-110 transition-transform"></i><span class="text-xs font-bold text-white">' + dict.dash_act_add_prop + '</span></button><button onclick="openAddTransactionModal()" class="bg-[#161a28] hover:bg-purple-600/20 border border-zinc-700/80 hover:border-purple-500/50 p-3.5 rounded-xl text-left rtl:text-right transition-all group flex items-center space-x-3 rtl:space-x-reverse"><i class="ph-bold ph-receipt text-purple-400 text-lg group-hover:scale-110 transition-transform"></i><span class="text-xs font-bold text-white">' + dict.dash_act_record_pay + '</span></button><button onclick="openDynModal(\'contacts\')" class="bg-[#161a28] hover:bg-amber-600/20 border border-zinc-700/80 hover:border-amber-500/50 p-3.5 rounded-xl text-left rtl:text-right transition-all group flex items-center space-x-3 rtl:space-x-reverse"><i class="ph-bold ph-user-plus text-amber-400 text-lg group-hover:scale-110 transition-transform"></i><span class="text-xs font-bold text-white">' + dict.dash_act_new_contact + '</span></button></div></div></div>';
 }
 
 // 20. Generic Module Interior Engine
@@ -3642,31 +3726,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 // MOBILE RESPONSIVE DRAWER CONTROLLER
 // ============================================================
-function toggleMobileSidebar(forceState) {
-    const sidebar = document.getElementById('sidebar-nav');
-    const backdrop = document.getElementById('mobile-sidebar-backdrop');
-    if (!sidebar) return;
 
-    const isRtl = document.documentElement.dir === 'rtl';
-    const hiddenClass = isRtl ? 'translate-x-full' : '-translate-x-full';
-    
-    let isCurrentlyOpen = !sidebar.classList.contains(hiddenClass);
-    if (forceState !== undefined) isCurrentlyOpen = !forceState;
-
-    if (isCurrentlyOpen) {
-        sidebar.classList.add(hiddenClass);
-        if (backdrop) {
-            backdrop.classList.add('opacity-0', 'pointer-events-none');
-            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
-        }
-    } else {
-        sidebar.classList.remove(hiddenClass);
-        if (backdrop) {
-            backdrop.classList.remove('opacity-0', 'pointer-events-none');
-            backdrop.classList.add('opacity-100', 'pointer-events-auto');
-        }
-    }
-}
 
 </script>
 </body>
