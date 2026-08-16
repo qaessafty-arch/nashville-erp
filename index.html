@@ -313,10 +313,16 @@
             }
         }
     
-        /* Permanent Independent Scroll Isolation */
+        
+        /* Perfect Mathematical Independent Scroll Isolation */
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+        }
         html, body {
             height: 100vh !important;
+            height: 100dvh !important;
             max-height: 100vh !important;
+            max-height: 100dvh !important;
             overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -326,9 +332,17 @@
             -webkit-overflow-scrolling: touch !important;
         }
         #sidebar-nav {
+            height: calc(100vh - 77px) !important;
+            height: calc(100dvh - 77px) !important;
+            max-height: calc(100vh - 77px) !important;
+            max-height: calc(100dvh - 77px) !important;
             overflow-y: auto !important;
         }
         #main-content-view {
+            height: calc(100vh - 77px) !important;
+            height: calc(100dvh - 77px) !important;
+            max-height: calc(100vh - 77px) !important;
+            max-height: calc(100dvh - 77px) !important;
             overflow-y: auto !important;
         }
     </style>
