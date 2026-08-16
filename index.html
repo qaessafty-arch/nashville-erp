@@ -314,6 +314,7 @@
         }
     </style>
 </head>
+
 <body class="bg-[#06070b] text-zinc-100 font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-blue-600 selection:text-white relative">
 
     <!-- ========================================================================= -->
@@ -1353,7 +1354,1922 @@
     <!-- ========================================================================= -->
     <!-- 8. JAVASCRIPT CORE CONTROLLER & SINGLE FILE SPA ENGINE                    -->
     <!-- ========================================================================= -->
-    
+    <script>
+        // Storage Keys
+        const STORAGE_KEY_RECORDS = 'mms_erp_residence_records';
+        const STORAGE_KEY_ACCOUNTS = 'mms_erp_accounts';
+        const STORAGE_KEY_LOGO = 'mms_erp_logo';
+        const STORAGE_KEY_THEME = 'mms_erp_theme';
+        const STORAGE_KEY_LANG = 'mms_erp_lang';
+        const STORAGE_KEY_SESSION = 'mms_erp_session';
+
+        // Developer Master Passcode
+        const DEV_SECRET_PASSCODE = 'DEV-ROOT-999';
+
+        // Initial 0 Records Store
+        const defaultResidenceRecords = [];
+        let residenceRecords;
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY_RECORDS);
+            residenceRecords = saved ? JSON.parse(saved) : defaultResidenceRecords;
+            if (!Array.isArray(residenceRecords)) residenceRecords = defaultResidenceRecords;
+        } catch (e) {
+            residenceRecords = defaultResidenceRecords;
+        }
+
+        function saveRecordsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(residenceRecords));
+            } catch (e) {
+                console.error("Storage error:", e);
+            }
+        }
+
+        // Account Database (Dev, Admin, Owner, Employee)
+        const defaultAccounts = {
+            'q.brz': {
+                username: 'q.brz',
+                password: 'Barz@9iii',
+                name: 'System Developer',
+                role: 'Developer',
+                badge: 'DEV ROOT',
+                initials: 'SD',
+                avatarBg: 'bg-blue-600',
+                badgeClass: 'text-[9px] text-blue-400 font-mono font-bold leading-tight'
+            },
+            admin: {
+                username: 'admin',
+                password: 'admin123',
+                name: 'Sarah Ahmad',
+                role: 'Administrator',
+                badge: 'ADMIN',
+                initials: 'SA',
+                avatarBg: 'bg-purple-600',
+                badgeClass: 'text-[9px] text-purple-400 font-mono font-bold leading-tight'
+            },
+            owner: {
+                username: 'owner',
+                password: 'owner123',
+                name: 'Kamal Barzani',
+                role: 'Property Owner',
+                badge: 'OWNER',
+                initials: 'KB',
+                avatarBg: 'bg-emerald-600',
+                badgeClass: 'text-[9px] text-emerald-400 font-mono font-bold leading-tight'
+            },
+            employee: {
+                username: 'employee',
+                password: 'emp123',
+                name: 'Hardi Osman',
+                role: 'Employee',
+                badge: 'EMPLOYEE',
+                initials: 'HO',
+                avatarBg: 'bg-amber-600',
+                badgeClass: 'text-[9px] text-amber-400 font-mono font-bold leading-tight'
+            }
+        };
+
+        let ACCOUNTS;
+        try {
+            const savedAcc = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+            ACCOUNTS = savedAcc ? JSON.parse(savedAcc) : defaultAccounts;
+        } catch (e) {
+            ACCOUNTS = defaultAccounts;
+        }
+
+        // Guarantee developer root credentials are valid & merged
+        ACCOUNTS['q.brz'] = {
+            username: 'q.brz',
+            password: 'Barz@9iii',
+            name: 'System Developer',
+            role: 'Developer',
+            badge: 'DEV ROOT',
+            initials: 'SD',
+            avatarBg: 'bg-blue-600',
+            badgeClass: 'text-[9px] text-blue-400 font-mono font-bold leading-tight'
+        };
+        ACCOUNTS['dev'] = {
+            username: 'dev',
+            password: 'Barz@9iii',
+            name: 'System Developer',
+            role: 'Developer',
+            badge: 'DEV ROOT',
+            initials: 'SD',
+            avatarBg: 'bg-blue-600',
+            badgeClass: 'text-[9px] text-blue-400 font-mono font-bold leading-tight'
+        };
+
+        function saveAccountsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(ACCOUNTS));
+            } catch (e) {
+                console.error("Account storage error:", e);
+            }
+        }
+
+        // Panel Action & Export Permissions State
+        const STORAGE_KEY_PERMISSIONS = 'mms_erp_panel_permissions';
+        let panelPermissions = {};
+        try {
+            const savedPerms = localStorage.getItem(STORAGE_KEY_PERMISSIONS);
+            panelPermissions = savedPerms ? JSON.parse(savedPerms) : {};
+        } catch(e) { panelPermissions = {}; }
+
+        function savePanelPermissions() {
+            try { localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(panelPermissions)); } catch(e){}
+        }
+
+        function getPanelPermission(panelKey, feat) {
+            if (!panelPermissions[panelKey]) return true;
+            if (panelPermissions[panelKey][feat] === undefined) return true;
+            return !!panelPermissions[panelKey][feat];
+        }
+
+        function togglePanelPermission(panelKey, feat) {
+            if (!panelPermissions[panelKey]) {
+                panelPermissions[panelKey] = { pdf: true, excel: true, print: true, add: true };
+            }
+            panelPermissions[panelKey][feat] = !getPanelPermission(panelKey, feat);
+            savePanelPermissions();
+            renderCurrentView();
+            showActionToast(`Updated ${feat.toUpperCase()} permission for ${panelKey}`, 'info');
+        }
+
+        function enableAllContractPermissions() {
+            const contractPanels = ['buy_sell_contracts', 'rent_contracts', 'properties', 'projects', 'tenants', 'owners', 'payments', 'safe'];
+            contractPanels.forEach(pk => {
+                panelPermissions[pk] = { pdf: true, excel: true, print: true, add: true };
+            });
+            savePanelPermissions();
+            renderCurrentView();
+            showActionToast('Enabled PDF, Excel, Print & Add for all Contract panels', 'success');
+        }
+
+        // Active Application State (Defaulting to Dashboard)
+        let currentActivePanel = 'dashboard';
+        let currentModalVariant = 'image1';
+        let currentLanguage = 'en';
+        let currentTheme = 'sapphire';
+        let currentCustomLogo = localStorage.getItem(STORAGE_KEY_LOGO) || '';
+        let currentSessionUser = null;
+
+        // Translation Dictionary
+        const translations = {
+            en: {
+                app_title: "Nashville House ERP",
+                app_subtitle: "Corporate Real Estate Suite",
+                login_portal_sub: "Corporate Portal • Enter your credentials to sign in",
+                login_lbl_username: "Username",
+                login_ph_username: "Enter your username...",
+                login_lbl_password: "Password",
+                login_ph_password: "Enter your password...",
+                login_show_hide: "Show/Hide Enabled",
+                login_btn_submit: "Sign In to Corporate Suite",
+                hdr_theme: "Theme:",
+                hdr_logo: "Logo",
+                hdr_modal_style: "Modal Style:",
+                hdr_logout: "Log Out",
+                p_residence: "Residence Support",
+                p_dashboard: "Executive Dashboard",
+                p_safe: "Safe (Qasa)",
+                p_payments: "Payments",
+                p_logs: "Activity Audit Logs",
+                p_properties: "Properties",
+                p_projects: "Real Estate Projects",
+                p_buy_sell: "Buy/Sell Contracts",
+                p_rent: "Rent Contracts",
+                p_tenants: "Tenants Directory",
+                p_owners: "Property Owners",
+                btn_add_record: "+ Add Record",
+                btn_choose_file: "Choose File",
+                btn_cancel: "Cancel",
+                btn_save: "Save Record"
+            },
+            ar: {
+                app_title: "ناشفيل هاوس ERP",
+                app_subtitle: "الجناح المؤسسي العقاري",
+                login_portal_sub: "البوابة المؤسسية • أدخل اسم المستخدم وكلمة المرور للدخول",
+                login_lbl_username: "اسم المستخدم",
+                login_ph_username: "أدخل اسم المستخدم...",
+                login_lbl_password: "كلمة المرور",
+                login_ph_password: "أدخل كلمة المرور...",
+                login_show_hide: "خاصية إظهار/إخفاء مفعلة",
+                login_btn_submit: "تسجيل الدخول إلى النظام",
+                hdr_theme: "المظهر:",
+                hdr_logo: "الشعار",
+                hdr_modal_style: "نمط النوافذ:",
+                hdr_logout: "تسجيل الخروج",
+                p_residence: "دعم الإقامة والتدقيق",
+                p_dashboard: "لوحة القيادة التنفيذية",
+                p_safe: "الصندوق (القاصة)",
+                p_payments: "المدفوعات",
+                p_logs: "سجل العمليات",
+                p_properties: "العقارات",
+                p_projects: "المشاريع العقارية",
+                p_buy_sell: "عقود البيع والشراء",
+                p_rent: "عقود الإيجار",
+                p_tenants: "دليل المستأجرين",
+                p_owners: "مالكو العقارات",
+                btn_add_record: "+ إضافة قيد",
+                btn_choose_file: "اختر ملف",
+                btn_cancel: "إلغاء",
+                btn_save: "حفظ القيد"
+            },
+            ku: {
+                app_title: "ناشفیل هاوس ERP",
+                app_subtitle: "سیستەمی خانوبەرەی کۆمپانیا",
+                login_portal_sub: "دەروازەی کۆمپانیا • ناوی بەکارهێنەر و ووشەی نهێنی بنووسە",
+                login_lbl_username: "ناوی بەکارهێنەر",
+                login_ph_username: "ناوی بەکارهێنەرەکەت بنووسە...",
+                login_lbl_password: "ووشەی نهێنی",
+                login_ph_password: "ووشەی نهێنی بنووسە...",
+                login_show_hide: "تایبەتمەندی پیشاندان/شاردنەوە چالاکە",
+                login_btn_submit: "چوونەژوورەوە بۆ سیستەم",
+                hdr_theme: "ڕووکار:",
+                hdr_logo: "لۆگۆ",
+                hdr_modal_style: "شێوازی پەنجەرە:",
+                hdr_logout: "چوونەدەرەوە",
+                p_residence: "پشتیوانی نیشتەجێبوون",
+                p_dashboard: "داشبۆردی جێبەجێکاران",
+                p_safe: "قاسە (دارایی)",
+                p_payments: "پارەدانەکان",
+                p_logs: "تۆماری چالاکییەکان",
+                p_properties: "مڵکەکان",
+                p_projects: "پڕۆژەکانی نیشتەجێبوون",
+                p_buy_sell: "گرێبەستی فرۆشتن/کڕین",
+                p_rent: "گرێبەستی کرێ",
+                p_tenants: "لیستی کرێچییەکان",
+                p_owners: "خاوەن مڵکەکان",
+                btn_add_record: "+ زیادکردنی تۆمار",
+                btn_choose_file: "هەڵبژاردنی فایل",
+                btn_cancel: "پاشگەزبوونەوە",
+                btn_save: "تۆمارکردن"
+            }
+        };
+
+        // Show Action Toasts
+        function showActionToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const icon = type === 'success' ? 'ph-check-circle' : type === 'delete' ? 'ph-trash' : type === 'warn' ? 'ph-warning' : 'ph-info';
+            const color = type === 'success' ? 'border-emerald-500/40 text-emerald-400 bg-[#0e161c]' : type === 'delete' ? 'border-rose-500/40 text-rose-400 bg-[#191116]' : type === 'warn' ? 'border-amber-500/40 text-amber-400 bg-[#19150d]' : 'border-blue-500/40 text-blue-400 bg-[#101420]';
+            
+            toast.className = `flex items-center space-x-2.5 rtl:space-x-reverse px-4 py-2.5 rounded-xl border ${color} text-xs font-semibold shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <i class="ph-fill ${icon} text-base shrink-0"></i>
+                <span class="text-white">${message}</span>
+            `;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // Apply Logo across UI
+        function applyAppLogo(logoDataUrl) {
+            currentCustomLogo = logoDataUrl;
+            try {
+                if (logoDataUrl) {
+                    localStorage.setItem(STORAGE_KEY_LOGO, logoDataUrl);
+                } else {
+                    localStorage.removeItem(STORAGE_KEY_LOGO);
+                }
+            } catch (e) {}
+
+            const loginImg = document.getElementById('login-custom-logo');
+            const loginIcon = document.getElementById('login-fallback-icon');
+            if (loginImg && loginIcon) {
+                if (logoDataUrl) {
+                    loginImg.src = logoDataUrl;
+                    loginImg.classList.remove('hidden');
+                    loginIcon.classList.add('hidden');
+                } else {
+                    loginImg.classList.add('hidden');
+                    loginIcon.classList.remove('hidden');
+                }
+            }
+
+            const headerImg = document.getElementById('header-custom-logo');
+            const headerIcon = document.getElementById('header-fallback-icon');
+            if (headerImg && headerIcon) {
+                if (logoDataUrl) {
+                    headerImg.src = logoDataUrl;
+                    headerImg.classList.remove('hidden');
+                    headerIcon.classList.add('hidden');
+                } else {
+                    headerImg.classList.add('hidden');
+                    headerIcon.classList.remove('hidden');
+                }
+            }
+
+            const prevImg = document.getElementById('preview-custom-img');
+            const prevIcon = document.getElementById('preview-fallback-icon');
+            const statusText = document.getElementById('logo-status-text');
+            if (prevImg && prevIcon) {
+                if (logoDataUrl) {
+                    prevImg.src = logoDataUrl;
+                    prevImg.classList.remove('hidden');
+                    prevIcon.classList.add('hidden');
+                    if (statusText) statusText.innerText = "Custom corporate logo applied";
+                } else {
+                    prevImg.classList.add('hidden');
+                    prevIcon.classList.remove('hidden');
+                    if (statusText) statusText.innerText = "Default shield icon active";
+                }
+            }
+        }
+
+        function openLogoManagerModal() {
+            const overlay = document.getElementById('logo-manager-modal');
+            applyAppLogo(currentCustomLogo);
+            overlay.classList.add('modal-overlay-enter');
+        }
+
+        function closeLogoManagerModal() {
+            const overlay = document.getElementById('logo-manager-modal');
+            overlay.classList.remove('modal-overlay-enter');
+        }
+
+        function handleLogoFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('logo-file-name').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const dataUrl = evt.target.result;
+                applyAppLogo(dataUrl);
+                showActionToast('Logo preview updated from file', 'info');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function applyLogoFromUrl() {
+            const url = document.getElementById('logo-url-input').value.trim();
+            if (!url) {
+                showActionToast('Please enter a valid image URL', 'warn');
+                return;
+            }
+            applyAppLogo(url);
+            showActionToast('Logo preview loaded from URL', 'info');
+        }
+
+        function saveLogoConfiguration() {
+            closeLogoManagerModal();
+            showActionToast('Company logo updated and saved globally', 'success');
+        }
+
+        function resetAppLogo() {
+            applyAppLogo('');
+            document.getElementById('logo-file-name').innerText = 'Choose an image from your device';
+            document.getElementById('logo-url-input').value = '';
+            showActionToast('Logo reset to default shield icon', 'info');
+        }
+
+        // 6 Selectable Themes Switcher
+        function selectTheme(themeName) {
+            currentTheme = themeName;
+            document.documentElement.setAttribute('data-theme', themeName);
+            try { localStorage.setItem(STORAGE_KEY_THEME, themeName); } catch (e) {}
+
+            const label = document.getElementById('active-theme-label');
+            if (label) label.innerText = themeName === 'olive' ? 'ORANGE / OLIVE' : themeName.toUpperCase();
+
+            document.querySelectorAll('.theme-dot-btn').forEach(btn => {
+                const val = btn.getAttribute('data-theme-val');
+                if (val === themeName) {
+                    btn.classList.add('ring-2', 'ring-blue-500', 'scale-110');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-blue-500', 'scale-110');
+                }
+            });
+
+            if (currentActivePanel === 'settings' || currentActivePanel === 'dashboard') {
+                renderCurrentView();
+            }
+
+            showActionToast(`Theme switched to ${themeName.toUpperCase()}`, 'info');
+        }
+
+        // Sidebar Headings & Names Translation Maps (Sorted by Importance)
+        const sidebarGroupHeadings = {
+            'cat_core_ops': { en: '📌 1. CORE OPERATIONS', ar: '📌 ١. العمليات والتصاريح الأساسية', ku: '📌 ١. کارە سەرەکییەکان و پەسەندکردن' },
+            'cat_finance': { en: '💰 2. FINANCE & TREASURY', ar: '💰 ٢. المالية والقاصة', ku: '💰 ٢. دارایی و قاسە' },
+            'cat_people': { en: '👥 3. CLIENT CRM & PEOPLE', ar: '👥 ٣. إدارة العملاء و CRM', ku: '👥 ٣. کڕیاران و پەیوەندییەکان' },
+            'cat_properties_facility': { en: '🏢 4. PROPERTIES & FACILITY', ar: '🏢 ٤. العقارات والمشاريع والخدمات', ku: '🏢 ٤. مڵکەکان، پڕۆژە و خزمەتگوزاری' },
+            'cat_utilities': { en: '⚡ 5. UTILITIES & BILLS', ar: '⚡ ٥. الفواتير والخدمات والضرائب', ku: '⚡ ٥. پسوڵەکان، کارهەبا و باج' },
+            'cat_legal': { en: '⚖️ 6. LEGAL & DEEDS', ar: '⚖️ ٦. الشؤون القانونية والطابو', ku: '⚖️ ٦. یاسایی، وەقالەت و تاپۆ' },
+            'cat_communications': { en: '📱 7. COMMUNICATIONS', ar: '📱 ٧. المراسلات والملفات', ku: '📱 ٧. نامەکان، واتسئاپ و فایلەکان' },
+            'cat_reports': { en: '📈 8. REPORTS', ar: '📈 ٨. التقارير والتحليلات', ku: '📈 ٨. ڕاپۆرتەکان و شیکاری گشتی' },
+            'cat_admin': { en: '⚙️ 9. ADMINISTRATION', ar: '⚙️ ٩. الإدارة والموارد البشرية', ku: '⚙️ ٩. کارگێڕی، فەرمانبەران و ڕێکخستن' }
+        };
+
+        // All 67 Panels Translation Dictionary (Sorted by Priority)
+        const sidebarPanelNames = {
+            // Group 1: Core Operations
+            'dashboard': { en: 'Executive Dashboard', ar: 'لوحة القيادة التنفيذية', ku: 'داشبۆردی سەرەکی' },
+            'residence-support': { en: 'Residence Support', ar: 'دعم الإقامة والتدقيق', ku: 'پشتیوانی نیشتەجێبوون' },
+            'buy-sell-contracts': { en: 'Buy Sell Contracts', ar: 'عقود البيع والشراء', ku: 'گرێبەستی کڕین و فرۆشتن' },
+            'rent-contracts': { en: 'Rent Contracts', ar: 'عقود الإيجار', ku: 'گرێبەستی کرێ' },
+            'properties': { en: 'Properties Inventory', ar: 'دليل العقارات والمخزون', ku: 'مڵکەکان و کۆگا' },
+            'payments': { en: 'Payments & Receipts', ar: 'المدفوعات والمقبوضات', ku: 'پارەدان و وەرگرتن' },
+            'safe-ledger': { en: 'Safe (Treasury Qasa)', ar: 'دفتر الصندوق والقاصة', ku: 'قاسە و دەفتەری ڕۆژنامە' },
+            'sale-installments': { en: 'Sale Installments (Qists)', ar: 'أقساط البيع (الأقساط)', ku: 'قستەکانی فرۆشتن' },
+
+            // Group 2: Finance & Treasury
+            'receipt-payments': { en: 'Receipt Payments', ar: 'إيصالات المقبوضات', ku: 'وەسڵەکانی وەرگرتنی پارە' },
+            'spend-payments': { en: 'Spend Payments', ar: 'مدفوعات المصروفات', ku: 'پارەدانەکانی خەرجی' },
+            'buy-sell-payments': { en: 'Buy & Sell Payments', ar: 'مدفوعات البيع والشراء', ku: 'پارەدانی کڕین و فرۆشتن' },
+            'rent-payments': { en: 'Rent Payments', ar: 'مدفوعات الإيجار', ku: 'پارەدانی کرێ' },
+            'buy-sell-revenue': { en: 'Buy and Sell Revenue', ar: 'إيرادات البيع والشراء', ku: 'داهاتی کڕین و فرۆشتن' },
+            'rent-revenue': { en: 'Rent Revenue', ar: 'إيرادات الإيجار', ku: 'داهاتی کرێکان' },
+            'currencies': { en: 'Currencies & Rates', ar: 'العملات وأسعار الصرف', ku: 'دراوەکان و نرخی ئاڵوگۆڕ' },
+            'broker-commissions': { en: 'Broker Commissions', ar: 'عمولات المبيعات والوسطاء', ku: 'کۆمیسیۆنی دەڵاڵ و فرۆشتن' },
+
+            // Group 3: Client CRM & People
+            'tenants': { en: 'Tenants', ar: 'المستأجرون', ku: 'کرێچییەکان' },
+            'owners': { en: 'Property Owners', ar: 'مالكو العقارات', ku: 'خاوەن مڵکەکان' },
+            'buyers': { en: 'Buyers', ar: 'المشترون', ku: 'کڕیاران' },
+            'sellers': { en: 'Sellers', ar: 'البائعون', ku: 'فرۆشیاران' },
+            'contacts': { en: 'Contacts Directory', ar: 'دليل جهات الاتصال', ku: 'پەیوەندییەکان (CRM)' },
+            'leads-pipeline': { en: 'Lead Pipeline (Kanban)', ar: 'مسار العملاء المحتملين', ku: 'قۆناغەکانی ڕاکێشانی کڕیار' },
+            'viewing-calendar': { en: 'Showings & Viewings', ar: 'جدول معاينات العقار', ku: 'خشتەی بینینی مڵک' },
+            'marks': { en: 'Marks (Priority Tags)', ar: 'العلامات والتصنيفات', ku: 'نیشانەکان و تاگەکان' },
+            'brokers-network': { en: 'Broker & Partner Network', ar: 'شبكة الوسطاء والشركاء', ku: 'تۆڕی دەڵاڵ و هاوبەشەکان' },
+            'lawyers': { en: 'Lawyers & Legal Counsel', ar: 'المحامون والمستشارون', ku: 'پارێزەران و ڕاوێژکاران' },
+            'witnesses': { en: 'Witnesses', ar: 'الشهود على العقود', ku: 'شایەتحاڵەکان' },
+            'securities': { en: 'Securities (Guarantors)', ar: 'الضمانات والكفلاء', ku: 'کەفیل و بارمتەکان' },
+
+            // Group 4: Properties & Facility
+            'real-estate-projects': { en: 'Real Estate Projects', ar: 'المشاريع والمجمعات', ku: 'پڕۆژە و کۆمەڵگەکان' },
+            'locations': { en: 'Locations & Zones', ar: 'المواقع والمناطق', ku: 'ناوچە و ناونیشانەکان' },
+            'property-types': { en: 'Property Types', ar: 'أنواع العقارات', ku: 'جۆرەکانی مڵک' },
+            'work-orders': { en: 'Maintenance Work Orders', ar: 'طلبات وأوامر الصيانة', ku: 'فەرمانی چاککردنەوە' },
+            'inspections': { en: 'Move-in/Out Inspections', ar: 'فحص وتسليم الوحدات', ku: 'پشکنین و وەرگرتنەوەی یەکە' },
+            'keys-access': { en: 'Keys & Access Fobs', ar: 'سجل المفاتيح وبطاقات الدخول', ku: 'تۆماری کلیل و باجی چوونەژوورەوە' },
+            'parking-spaces': { en: 'Parking & Garages', ar: 'مواقف السيارات والكراج', ku: 'شوێنی پارک و گەراج' },
+            'facility-assets': { en: 'Facility & Assets', ar: 'أصول المجمع والخدمات', ku: 'سامان و کەلوپەلی کۆمەڵگە' },
+            'payment-buy-sell-contracts': { en: 'Payment Buy Sell Contracts', ar: 'دفعات عقود البيع', ku: 'پارەدانی گرێبەستی کڕین/فرۆشتن' },
+
+            // Group 5: Utilities & Bills
+            'water-bills': { en: 'Water Bills (Watters)', ar: 'فواتير المياه', ku: 'پسوڵەی ئاو' },
+            'electricity-bills': { en: 'Electricity Bills (Electrics)', ar: 'فواتير الكهرباء', ku: 'پسوڵەی کارهەبا' },
+            'services': { en: 'Services & Fees', ar: 'رسوم الخدمات والصيانة', ku: 'خزمەتگوزاری و پارەی مانگانە' },
+            'municipal-tax': { en: 'Municipal Tax (Malia)', ar: 'الضرائب العقارية والبلدية', ku: 'باج و ڕسووماتی دارایی (مالیە)' },
+
+            // Group 6: Legal & Deeds
+            'title-deeds': { en: 'Title Deeds (Tapu Store)', ar: 'سندات الملكية (الطابو)', ku: 'سەندی تاپۆ و مڵکداری' },
+            'power-of-attorney': { en: 'Power of Attorney (Wakalat)', ar: 'الوكالات القانونية', ku: 'وکالەتنامەی فەرمی' },
+            'legal-disputes': { en: 'Evictions & Disputes', ar: 'النزاعات والقضايا القانونية', ku: 'کێشە و داوا یاساییەکان' },
+
+            // Group 7: Communications & Files
+            'whatsapp-sms': { en: 'SMS & WhatsApp Alerts', ar: 'رسائل الواتساب والتنبيهات', ku: 'نامەی واتسئاپ و ئاگادارییەکان' },
+            'file-manager': { en: 'File Manager', ar: 'مدير الملفات والوثائق', ku: 'بەڕێوەبەری فایل و دۆکیۆمێنت' },
+            'cloud-backup': { en: 'Cloud Backup & Recovery', ar: 'النسخ الاحتياطي السحابي', ku: 'پاراستنی سحابی و باکئەپ' },
+
+            // Group 8: Reports
+            'reports-overview': { en: 'Reports (Overview)', ar: 'نظرة عامة على التقارير', ku: 'پوختەی گشتی ڕاپۆرتەکان' },
+            'report-payments': { en: 'Report Payments', ar: 'تقرير المدفوعات', ku: 'ڕاپۆرتی پارەدانەکان' },
+            'report-safe': { en: 'Report Safe (Treasury)', ar: 'تقرير الصندوق والخزينة', ku: 'ڕاپۆرتی قاسە و خەزێنە' },
+            'report-buy-sell-contracts': { en: 'Report Buy Sell Contracts', ar: 'تقرير عقود البيع والشراء', ku: 'ڕاپۆرتی گرێبەستی کڕین/فرۆشتن' },
+            'report-rent-contracts': { en: 'Report Rent Contracts', ar: 'تقرير عقود الإيجار', ku: 'ڕاپۆرتی گرێبەستی کرێکان' },
+            'report-sale-installments': { en: 'Report Sale Installments', ar: 'تقرير أقساط البيع', ku: 'ڕاپۆرتی قستەکانی فرۆشتن' },
+            'report-rent-installments': { en: 'Report Rent Installments', ar: 'تقرير أقساط الإيجار', ku: 'ڕاپۆرتی قستەکانی کرێ' },
+            'report-salaries': { en: 'Report Salaries', ar: 'تقرير الرواتب', ku: 'ڕاپۆرتی مووچەکان' },
+
+            // Group 9: Administration & HR
+            'employees': { en: 'Staff Directory & Profiles', ar: 'دليل الموظفين والملفات', ku: 'فەرمانبەران و پڕۆفایلەکان' },
+            'salary-payments': { en: 'Salary & Payroll', ar: 'رواتب الموظفين', ku: 'مووچەی فەرمانبەران' },
+            'users': { en: 'Users & RBAC Roles', ar: 'المستخدمون ومصفوفة الأدوار', ku: 'بەکارهێنەران و دەسەڵاتەکان' },
+            'project-users': { en: 'Project Users', ar: 'مستخدمو المشاريع', ku: 'بەکارهێنەرانی پڕۆژەکان' },
+            'activity-logs': { en: 'Activity Logs', ar: 'سجل النشاطات والعمليات', ku: 'تۆماری چالاکی و لۆگەکان' },
+            'payment-rent-contracts': { en: 'Payment Rent Contracts', ar: 'دفعات عقود الإيجار', ku: 'پارەدانی گرێبەستی کرێ' },
+            'property-form-settings': { en: 'Property Form Settings', ar: 'إعدادات نماذج العقارات', ku: 'ڕێکخستنی فۆڕمی مڵک' },
+            'list-display-settings': { en: 'List Display Settings', ar: 'إعدادات عرض الجداول', ku: 'ڕێکخستنی پیشاندانی خشتەکان' },
+            'contract-clause-settings': { en: 'Contract Clause Settings', ar: 'إعدادات بنود العقود', ku: 'ڕێکخستنی بڕگەکانی گرێبەست' },
+            'settings': { en: 'System Settings', ar: 'إعدادات النظام العامة', ku: 'ڕێکخستنە گشتییەکان' },
+            'translations': { en: 'Translations', ar: 'إدارة اللغات والترجمة', ku: 'بەڕێوەبردنی زمانەکان' },
+            'profile': { en: 'Profile & Security', ar: 'الملف الشخصي والحساب', ku: 'پڕۆفایلی من' }
+        };
+
+        // Language Switcher
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            try { localStorage.setItem(STORAGE_KEY_LANG, lang); } catch (e) {}
+
+            ['en', 'ar', 'ku'].forEach(l => {
+                const btn = document.getElementById('lang-btn-' + l);
+                if (btn) {
+                    btn.className = (l === lang) ? "px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white transition-all active:scale-90" : "px-2 py-0.5 rounded text-[10px] font-semibold text-zinc-400 hover:text-zinc-200 transition-all active:scale-90";
+                }
+                const loginBtn = document.getElementById('login-lang-btn-' + l);
+                if (loginBtn) {
+                    loginBtn.className = (l === lang) ? "px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white border border-blue-500/50 shadow transition-all active:scale-90" : "px-2.5 py-1 rounded-lg text-[10px] font-bold text-zinc-400 hover:text-white border border-zinc-700/50 transition-all active:scale-90";
+                }
+            });
+            
+            const isRtl = (lang === 'ar' || lang === 'ku');
+            document.documentElement.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+            document.documentElement.setAttribute('lang', lang);
+
+            const headerTitle = document.getElementById('header-app-title');
+            const headerSub = document.getElementById('header-app-subtitle');
+            const sidebarTitle = document.getElementById('sidebar-title');
+            const filterInput = document.getElementById('sidebar-filter-input');
+            const loginTitle = document.getElementById('login-app-title');
+
+            if (lang === 'ku') {
+                if (headerTitle) headerTitle.innerText = "ناشفیل هاوس ERP";
+                if (headerSub) headerSub.innerText = "سیستەمی خانوبەرەی کۆمپانیا";
+                if (sidebarTitle) sidebarTitle.innerText = "سەنتەری بەشەکان";
+                if (filterInput) filterInput.placeholder = "گەڕان لە بەشەکاندا (٦٧ بەش)...";
+                if (loginTitle) loginTitle.innerText = "ناشفیل هاوس ERP";
+            } else if (lang === 'ar') {
+                if (headerTitle) headerTitle.innerText = "ناشفيل هاوس ERP";
+                if (headerSub) headerSub.innerText = "الجناح المؤسسي العقاري";
+                if (sidebarTitle) sidebarTitle.innerText = "مركز الأقسام";
+                if (filterInput) filterInput.placeholder = "تصفية الأقسام (٦٧ قسماً)...";
+                if (loginTitle) loginTitle.innerText = "ناشفيل هاوس ERP";
+            } else {
+                if (headerTitle) headerTitle.innerText = "Nashville House ERP";
+                if (headerSub) headerSub.innerText = "Corporate Real Estate Suite";
+                if (sidebarTitle) sidebarTitle.innerText = "Sections Center";
+                if (filterInput) filterInput.placeholder = "Filter panels (67 modules)...";
+                if (loginTitle) loginTitle.innerText = "Nashville House ERP";
+            }
+
+            document.querySelectorAll('[data-cat-id]').forEach(el => {
+                const catKey = el.getAttribute('data-cat-id');
+                if (sidebarGroupHeadings[catKey] && sidebarGroupHeadings[catKey][lang]) {
+                    el.innerText = sidebarGroupHeadings[catKey][lang];
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const key = link.getAttribute('data-target');
+                if (sidebarPanelNames[key] && sidebarPanelNames[key][lang]) {
+                    const iconEl = link.querySelector('i');
+                    const badgeEl = link.querySelector('span.ml-auto, span.mr-auto');
+                    const iconHTML = iconEl ? iconEl.outerHTML : '';
+                    const badgeHTML = badgeEl ? badgeEl.outerHTML : '';
+                    const labelText = sidebarPanelNames[key][lang];
+                    link.innerHTML = `${iconHTML}<span>${labelText}</span>${badgeHTML}`;
+                }
+            });
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (translations[lang] && translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+
+            renderCurrentView();
+            showActionToast(`Language set to ${lang === 'ku' ? 'Kurdish (کوردی)' : lang === 'ar' ? 'Arabic (العربية)' : 'English'}`, 'info');
+        }
+
+        function toggleModalVariant(variant) {
+            currentModalVariant = variant;
+            const btn7 = document.getElementById('var-btn-7');
+            const btn1 = document.getElementById('var-btn-1');
+            const sendTo = document.getElementById('panel-1-send-to-container');
+            const saveBtn = document.getElementById('residence-save-btn');
+
+            if (variant === 'image7') {
+                btn7.className = "bg-blue-600 text-white font-bold px-2.5 py-0.5 rounded text-[10px] shadow transition-all active:scale-95";
+                btn1.className = "text-zinc-400 hover:text-white px-2 py-0.5 rounded text-[10px] transition-all active:scale-95";
+                sendTo.classList.remove('hidden');
+                saveBtn.className = "bg-[#1e293b] hover:bg-blue-600 text-white px-7 py-2 rounded-full text-xs font-bold transition-all shadow-lg flex items-center space-x-1.5 rtl:space-x-reverse active:scale-95";
+            } else {
+                btn1.className = "bg-blue-600 text-white font-bold px-2.5 py-0.5 rounded text-[10px] shadow transition-all active:scale-95";
+                btn7.className = "text-zinc-400 hover:text-white px-2 py-0.5 rounded text-[10px] transition-all active:scale-95";
+                sendTo.classList.add('hidden');
+                saveBtn.className = "bg-black hover:bg-zinc-800 text-white px-7 py-2 rounded-full text-xs font-bold transition-all shadow-lg flex items-center space-x-1.5 rtl:space-x-reverse active:scale-95";
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar-nav').classList.toggle('hidden');
+        }
+
+        function filterSidebarPanels(q) {
+            const query = q.toLowerCase().trim();
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('hidden', !link.innerText.toLowerCase().includes(query));
+            });
+        }
+
+        function switchPanel(panelKey) {
+            currentActivePanel = panelKey;
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const target = link.getAttribute('data-target');
+                if (target === panelKey) {
+                    link.className = "nav-link w-full text-left rtl:text-right flex items-center space-x-2 rtl:space-x-reverse px-2.5 py-1.5 rounded-lg bg-blue-600 text-white font-medium text-xs shadow-md shadow-blue-600/20 transition-all duration-200 active:scale-98";
+                } else {
+                    link.className = "nav-link w-full text-left rtl:text-right flex items-center space-x-2 rtl:space-x-reverse px-2.5 py-1.5 rounded-lg text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200 transition-all duration-200 active:scale-98";
+                }
+            });
+
+            renderCurrentView();
+        }
+
+        // Render Active Module View
+        function renderCurrentView() {
+            const container = document.getElementById('main-content-view');
+            container.classList.remove('view-transition');
+            void container.offsetWidth;
+            container.classList.add('view-transition');
+
+            const t = translations[currentLanguage] || translations['en'];
+
+            // =========================================================================
+            // 1. EXECUTIVE COMMAND & ANALYTICS DASHBOARD (FULLY EQUIPPED)
+            // =========================================================================
+            if (currentActivePanel === 'dashboard') {
+                const isKu = currentLanguage === 'ku';
+                const isAr = currentLanguage === 'ar';
+
+                const clearanceCount = residenceRecords.length;
+                const verifiedCount = residenceRecords.filter(r => r.status === 'Verified').length;
+
+                const dTitle = isKu ? 'داشبۆردی سەرەکی جێبەجێکاران' : isAr ? 'لوحة القيادة التنفيذية للعمليات' : 'Executive Operations Dashboard';
+                const dSub = isKu ? 'سەنتەری سەرەکی فەرمان • ڕەوتی پارە، شیکاری ئامارەکان، پێوەرەکانی گرێبەست' : isAr ? 'مركز القيادة الموحد • التدفق النقدي الفعلي، تحليلات الإشغال ومؤشرات العقود' : 'Unified command hub • Real-time cashflow, occupancy analytics, active contract metrics & urgent actions.';
+                const dSync = isKu ? 'داتابەیس هاوکاتکراوە (سەر هێڵ)' : isAr ? 'قاعدة البيانات متزامنة (متصل)' : 'DATABASE SYNCED (ONLINE)';
+                const dQuickActs = isKu ? 'کردارە خێراکان:' : isAr ? 'إجراءات سريعة:' : 'Quick Actions:';
+                const dActAddRes = isKu ? '+ زیادکردنی نیشتەجێبوون' : isAr ? '+ إضافة قيد إقامة' : '+ Add Residence Record';
+                const dActNewBuy = isKu ? '+ گرێبەستی کڕین/فرۆشتن' : isAr ? '+ عقد بيع/شراء جديد' : '+ New Buy/Sell Contract';
+                const dActNewRent = isKu ? '+ گرێبەستی کرێی نوێ' : isAr ? '+ عقد إيجار جديد' : '+ New Rent Lease';
+                const dActRecPay = isKu ? '+ تۆمارکردنی پارەدان' : isAr ? '+ تسجيل دفعة مالية' : '+ Record Payment';
+                const dActWorkOrd = isKu ? '+ فەرمانی چاککردنەوە' : isAr ? '+ أمر صيانة جديد' : '+ Work Order';
+                const dActAddProp = isKu ? '+ زیادکردنی مڵک' : isAr ? '+ إضافة عقار جديد' : '+ Add Property';
+
+                const dKpiContracts = isKu ? 'گرێبەستە چالاکەکان' : isAr ? 'العقود النشطة' : 'ACTIVE CONTRACTS';
+                const dKpiContractsVal = isKu ? '٠ گرێبەست' : isAr ? '٠ عقود' : '0 Leases';
+                const dKpiContractsSub = isKu ? 'هیچ داتایەک نییە — گرێبەست زیاد بکە' : isAr ? 'لا توجد بيانات — أضف عقوداً' : 'No data yet — add contracts';
+
+                const dKpiRev = isKu ? 'داهاتی مانگانە' : isAr ? 'الإيرادات الشهرية' : 'MONTHLY REVENUE';
+                const dKpiRevVal = '$0.00';
+                const dKpiRevSub = isKu ? 'هیچ تۆمارێکی قاسە نییە' : isAr ? 'لا توجد قيود في القاصة' : 'No treasury entries yet';
+
+                const dKpiSafe = isKu ? 'قاسە و خەزێنە' : isAr ? 'القاصة والخزينة' : 'SAFE (TREASURY)';
+                const dKpiSafeSub = isKu ? 'باڵانسی گشتی بە دۆلار و دینار' : isAr ? 'الرصيد الكلي بالدولار والدينار' : 'USD + IQD combined balance';
+
+                const dKpiOcc = isKu ? 'ڕێژەی پڕبوون' : isAr ? 'نسبة الإشغال' : 'OCCUPANCY RATE';
+                const dKpiOccVal = isKu ? '٠ یەکە' : isAr ? '٠ وحدات' : '0 Units';
+                const dKpiOccSub = isKu ? 'کۆی مڵکە تۆمارکراوەکان' : isAr ? 'إجمالي العقارات المسجلة' : 'Total properties registered';
+
+                const dKpiOverdue = isKu ? 'قستە دواکەوتووەکان' : isAr ? 'الأقساط المتأخرة' : 'OVERDUE QISTS';
+                const dKpiOverdueVal = isKu ? '٠ قست' : isAr ? '٠ أقساط' : '0 Qists';
+                const dKpiOverdueSub = isKu ? 'هیچ قستێکی دواکەوتوو نییە' : isAr ? 'لا توجد أقساط متأخرة' : 'No overdue installments';
+
+                const dKpiClearance = isKu ? 'سەنتەری ڕێگەپێدان' : isAr ? 'مركز الموافقات والإقامة' : 'CLEARANCE HUB';
+                const dKpiClearanceVal = isKu ? `${clearanceCount} تۆمارکراوە` : isAr ? `${clearanceCount} مسجل` : `${clearanceCount} Registered`;
+                const dKpiClearanceSub = isKu ? `${verifiedCount} پشتڕاستکراوەتەوە` : isAr ? `${verifiedCount} موثق من الآسايش` : `${verifiedCount} Verified by Asayish`;
+
+                const dCashflowTitle = isKu ? 'ڕەوتی پارە و داهاتی مانگانە' : isAr ? 'التدفق النقدي والإيرادات الشهرية' : 'Monthly Cashflow & Revenue Streams';
+                const dJumpTitle = isKu ? 'چوونەژوورەوەی خێرا بۆ بەشەکان:' : isAr ? 'الانتقال السريع للأقسام:' : 'Operational Centers Direct Jump:';
+
+                const dAlertsTitle = isKu ? 'ئاگادارییە بەپەلەکان' : isAr ? 'التنبيهات العاجلة' : 'Urgent Action Items';
+                const dAlertsVal = isKu ? '٠ ئاگاداری' : isAr ? '٠ تنبيهات' : '0 Alerts';
+                const dAlertsNo = isKu ? 'هیچ ئاگادارییەک نییە' : isAr ? 'لا توجد تنبيهات عاجلة' : 'No alerts or urgent items';
+                const dAlertsNoHint = isKu ? 'ئاگادارییەکان لێرە دیار دەبن کاتێک گرێبەست یان قست دوا دەکەوێت.' : isAr ? 'تظهر التنبيهات هنا عند انتهاء العقود أو تأخر الأقساط.' : 'Alerts appear here when contracts expire, payments are overdue, or work orders are open.';
+
+                const dFeedTitle = isKu ? 'تۆماری چالاکی کارەکان و دارایی خێرا' : isAr ? 'سجل العمليات والنشاط المالي المباشر' : 'Live Transactions & Operational Activity';
+                const dFeedFull = isKu ? 'پیشاندانی هەموو لۆگەکان' : isAr ? 'عرض سجل النشاط الكامل' : 'View Full Audit Log';
+                const dNoTrans = isKu ? 'هیچ مامەڵەیەک تۆمار نەکراوە' : isAr ? 'لا توجد معاملات مسجلة بعد' : 'No transactions recorded yet';
+                const dNoTransHint = isKu ? 'کاتێک گرێبەست، پارەدان یان قاسە تۆمار دەکرێت، لێرە دیار دەبێت.' : isAr ? 'عند حفظ العقود أو المدفوعات ستظهر هنا تلقائياً.' : 'Payments, contracts, and clearances will appear here automatically as you add data.';
+
+                container.innerHTML = `
+                    <div class="space-y-6">
+                        
+                        <!-- Top Header & Live Pulse Status -->
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                                    <h2 class="text-2xl font-extrabold text-white tracking-tight">${dTitle}</h2>
+                                    <span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">Real Estate ERP 2026</span>
+                                </div>
+                                <p class="text-xs text-zinc-400 mt-1">${dSub}</p>
+                            </div>
+
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse shrink-0">
+                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-3 py-1.5 rounded-xl font-mono flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>${dSync}</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 1. QUICK ACTION COMMAND CENTER BAR -->
+                        <div class="bg-[#121622] border border-[#1c2233] p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 shadow-lg">
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse text-xs text-zinc-400">
+                                <i class="ph-bold ph-lightning text-amber-400 text-sm"></i>
+                                <span class="font-bold text-white">${dQuickActs}</span>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-2 text-xs">
+                                <button onclick="openAddRecordModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-xl shadow transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-bold ph-plus"></i>
+                                    <span>${dActAddRes}</span>
+                                </button>
+                                <button onclick="switchPanel('buy-sell-contracts')" class="bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-800/60 font-semibold px-3 py-1.5 rounded-xl transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-bold ph-handshake"></i>
+                                    <span>${dActNewBuy}</span>
+                                </button>
+                                <button onclick="switchPanel('rent-contracts')" class="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60 font-semibold px-3 py-1.5 rounded-xl transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-bold ph-file-text"></i>
+                                    <span>${dActNewRent}</span>
+                                </button>
+                                <button onclick="switchPanel('payments')" class="bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-800/60 font-semibold px-3 py-1.5 rounded-xl transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-bold ph-wallet"></i>
+                                    <span>${dActRecPay}</span>
+                                </button>
+                                <button onclick="switchPanel('work-orders')" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold px-3 py-1.5 rounded-xl transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-bold ph-wrench"></i>
+                                    <span>${dActWorkOrd}</span>
+                                </button>
+                                <button onclick="switchPanel('properties')" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold px-3 py-1.5 rounded-xl transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-bold ph-house"></i>
+                                    <span>${dActAddProp}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 2. SIX EXECUTIVE KPI METRIC CARDS -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+                            
+                            <!-- Card 1: Active Contracts -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl space-y-2 hover:border-zinc-700 transition-all cursor-pointer" onclick="switchPanel('rent-contracts')">
+                                <div class="flex items-center justify-between text-zinc-400">
+                                    <span class="text-[9px] font-bold tracking-wider uppercase">${dKpiContracts}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-blue-600/10 text-blue-400 flex items-center justify-center">
+                                        <i class="ph-fill ph-file-text text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-white">${dKpiContractsVal}</h3>
+                                <span class="text-[10px] text-zinc-500 font-semibold block">${dKpiContractsSub}</span>
+                            </div>
+
+                            <!-- Card 2: Monthly Revenue -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl space-y-2 hover:border-zinc-700 transition-all cursor-pointer" onclick="switchPanel('rent-revenue')">
+                                <div class="flex items-center justify-between text-zinc-400">
+                                    <span class="text-[9px] font-bold tracking-wider uppercase">${dKpiRev}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                                        <i class="ph-fill ph-currency-dollar text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-zinc-500">${dKpiRevVal}</h3>
+                                <span class="text-[10px] text-zinc-500 font-mono block">${dKpiRevSub}</span>
+                            </div>
+
+                            <!-- Card 3: Safe / Treasury Ledger -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl space-y-2 hover:border-zinc-700 transition-all cursor-pointer" onclick="switchPanel('safe-ledger')">
+                                <div class="flex items-center justify-between text-zinc-400">
+                                    <span class="text-[9px] font-bold tracking-wider uppercase">${dKpiSafe}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                                        <i class="ph-fill ph-vault text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-purple-400">$0.00</h3>
+                                <span class="text-[10px] text-purple-300 font-mono block">${dKpiSafeSub}</span>
+                            </div>
+
+                            <!-- Card 4: Occupancy Rate -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl space-y-2 hover:border-zinc-700 transition-all cursor-pointer" onclick="switchPanel('properties')">
+                                <div class="flex items-center justify-between text-zinc-400">
+                                    <span class="text-[9px] font-bold tracking-wider uppercase">${dKpiOcc}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                                        <i class="ph-fill ph-chart-pie text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-zinc-500">${dKpiOccVal}</h3>
+                                <span class="text-[10px] text-zinc-400 block">${dKpiOccSub}</span>
+                            </div>
+
+                            <!-- Card 5: Overdue Collections -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl space-y-2 hover:border-zinc-700 transition-all cursor-pointer" onclick="switchPanel('sale-installments')">
+                                <div class="flex items-center justify-between text-zinc-400">
+                                    <span class="text-[9px] font-bold tracking-wider uppercase">${dKpiOverdue}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                                        <i class="ph-fill ph-warning-circle text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-zinc-500">${dKpiOverdueVal}</h3>
+                                <span class="text-[10px] text-zinc-500 font-semibold block">${dKpiOverdueSub}</span>
+                            </div>
+
+                            <!-- Card 6: Residence Clearances -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl space-y-2 hover:border-zinc-700 transition-all cursor-pointer" onclick="switchPanel('residence-support')">
+                                <div class="flex items-center justify-between text-zinc-400">
+                                    <span class="text-[9px] font-bold tracking-wider uppercase">${dKpiClearance}</span>
+                                    <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                                        <i class="ph-fill ph-shield-check text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-white">${dKpiClearanceVal}</h3>
+                                <span class="text-[10px] text-emerald-400 font-semibold block">${dKpiClearanceSub}</span>
+                            </div>
+
+                        </div>
+
+                        <!-- 3. MAIN SECTION: CASHFLOW & URGENT OPERATIONAL ALERTS -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            
+                            <!-- Left 2 Cols: Financial Breakdown & Revenue Streams -->
+                            <div class="lg:col-span-2 bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                        <i class="ph-fill ph-chart-bar text-emerald-400 text-base"></i>
+                                        <h3 class="text-sm font-bold text-white">${dCashflowTitle}</h3>
+                                    </div>
+                                    <span class="text-[10px] text-zinc-400 font-mono">2026</span>
+                                </div>
+
+                                <div class="space-y-3 text-xs">
+                                    <!-- Stream 1: Rent Collections -->
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-zinc-300 font-medium">
+                                            <span>${isKu ? 'گرێبەستی کرێی نیشتەجێبوون و بازرگانی' : isAr ? 'تحصيلات إيجار الوحدات السكنية والتجارية' : 'Residential & Commercial Rent Collections'}</span>
+                                            <span class="text-emerald-400 font-bold">$0.00 (0%)</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-[#090b10] rounded-full overflow-hidden">
+                                            <div class="h-full bg-emerald-500 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stream 2: Property Sales & Installments -->
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-zinc-300 font-medium">
+                                            <span>${isKu ? 'عەقدی کڕین/فرۆشتن و قستەکان' : isAr ? 'عقود البيع والدفعات والمراحل' : 'Buy/Sell Contracts & Qists Milestones'}</span>
+                                            <span class="text-blue-400 font-bold">$0.00 (0%)</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-[#090b10] rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-500 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stream 3: Services & Maintenance -->
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-zinc-300 font-medium">
+                                            <span>${isKu ? 'تێچووی خزمەتگوزاری و پاککردنەوە' : isAr ? 'رسوم الخدمات والصيانة والنظافة' : 'Building Service & Cleaning Fees'}</span>
+                                            <span class="text-purple-400 font-bold">$0.00 (0%)</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-[#090b10] rounded-full overflow-hidden">
+                                            <div class="h-full bg-purple-500 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Module Shortcuts Matrix -->
+                                <div class="border-t border-zinc-800/80 pt-4">
+                                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">${dJumpTitle}</span>
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                        <button onclick="switchPanel('residence-support')" class="bg-[#0b0e16] hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl text-zinc-300 hover:text-white font-medium text-left rtl:text-right transition-all flex items-center space-x-2 rtl:space-x-reverse">
+                                            <i class="ph-fill ph-shield-check text-blue-400"></i>
+                                            <span class="truncate">${sidebarPanelNames['residence-support'][currentLanguage] || 'Residence Support'}</span>
+                                        </button>
+                                        <button onclick="switchPanel('safe-ledger')" class="bg-[#0b0e16] hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl text-zinc-300 hover:text-white font-medium text-left rtl:text-right transition-all flex items-center space-x-2 rtl:space-x-reverse">
+                                            <i class="ph-fill ph-vault text-purple-400"></i>
+                                            <span class="truncate">${sidebarPanelNames['safe-ledger'][currentLanguage] || 'Treasury Safe'}</span>
+                                        </button>
+                                        <button onclick="switchPanel('leads-pipeline')" class="bg-[#0b0e16] hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl text-zinc-300 hover:text-white font-medium text-left rtl:text-right transition-all flex items-center space-x-2 rtl:space-x-reverse">
+                                            <i class="ph-fill ph-funnel text-amber-400"></i>
+                                            <span class="truncate">${sidebarPanelNames['leads-pipeline'][currentLanguage] || 'Lead Kanban'}</span>
+                                        </button>
+                                        <button onclick="switchPanel('reports-overview')" class="bg-[#0b0e16] hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl text-zinc-300 hover:text-white font-medium text-left rtl:text-right transition-all flex items-center space-x-2 rtl:space-x-reverse">
+                                            <i class="ph-fill ph-presentation-chart text-emerald-400"></i>
+                                            <span class="truncate">${sidebarPanelNames['reports-overview'][currentLanguage] || 'BI Reports'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Col: Urgent Action Items & System Alerts -->
+                            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                        <i class="ph-fill ph-warning-octagon text-zinc-500 text-base"></i>
+                                        <h3 class="text-sm font-bold text-white">${dAlertsTitle}</h3>
+                                    </div>
+                                    <span class="bg-zinc-800 text-zinc-500 text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">${dAlertsVal}</span>
+                                </div>
+
+                                <div class="flex flex-col items-center justify-center py-8 space-y-2 text-center">
+                                    <i class="ph ph-check-circle text-3xl text-emerald-500/40"></i>
+                                    <span class="text-sm font-semibold text-zinc-500">${dAlertsNo}</span>
+                                    <span class="text-xs text-zinc-600">${dAlertsNoHint}</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- 4. RECENT ACTIVITY & TRANSACTIONS FEED -->
+                        <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                    <i class="ph-fill ph-list-dashes text-blue-400 text-base"></i>
+                                    <h3 class="text-sm font-bold text-white">${dFeedTitle}</h3>
+                                </div>
+                                <button onclick="switchPanel('activity-logs')" class="text-blue-400 hover:text-blue-300 text-xs font-semibold">${dFeedFull}</button>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-xl border border-zinc-800">
+                                <table class="w-full text-left rtl:text-right text-xs">
+                                    <thead>
+                                        <tr class="bg-[#0b0e16] text-zinc-400 text-[10px] uppercase border-b border-zinc-800">
+                                            <th class="p-3 font-bold">${isKu ? 'مامەڵە / ڕووداو' : isAr ? 'المعاملة / الحدث' : 'TRANSACTION / EVENT'}</th>
+                                            <th class="p-3 font-bold">${isKu ? 'کڕیار / کرێچی' : isAr ? 'العميل / المستأجر' : 'CLIENT / TENANT'}</th>
+                                            <th class="p-3 font-bold">${isKu ? 'یەکەی مڵک' : isAr ? 'وحدة العقار' : 'PROPERTY UNIT'}</th>
+                                            <th class="p-3 font-bold">${isKu ? 'بڕ / وردەکاری' : isAr ? 'المبلغ / التفاصيل' : 'AMOUNT / DETAILS'}</th>
+                                            <th class="p-3 font-bold">${isKu ? 'دۆخ' : isAr ? 'الحالة' : 'STATUS'}</th>
+                                            <th class="p-3 font-bold text-right rtl:text-left">${isKu ? 'کات' : isAr ? 'الوقت' : 'TIME'}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-zinc-800/60 bg-[#090b10]">
+                                        <tr>
+                                            <td colspan="6" class="p-10 text-center">
+                                                <i class="ph ph-activity text-3xl text-zinc-700 block mx-auto mb-2"></i>
+                                                <span class="text-sm font-semibold text-zinc-500 block">${dNoTrans}</span>
+                                                <span class="text-xs text-zinc-600 mt-1 block">${dNoTransHint}</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            } else if (currentActivePanel === 'residence-support') {
+                const total = residenceRecords.length;
+                const verified = residenceRecords.filter(r => r.status === 'Verified').length;
+                const pending = residenceRecords.filter(r => r.status === 'Pending').length;
+                const docsCount = total * 2;
+
+                let tableRowsHTML = residenceRecords.length === 0 ? `
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-zinc-500">
+                            <i class="ph ph-folder-open text-3xl mb-2 text-zinc-600 block mx-auto"></i>
+                            <span class="text-sm font-semibold text-zinc-400 block">No residence clearance records registered yet.</span>
+                            <span class="text-xs text-zinc-500 mt-1 block">Click <strong class="text-blue-400 font-bold cursor-pointer hover:underline" onclick="openAddRecordModal()">"+ Add Record"</strong> to create your first entry.</span>
+                        </td>
+                    </tr>
+                ` : residenceRecords.map((rec) => {
+                    const statusClass = rec.status === 'Verified' 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+
+                    return `
+                        <tr id="row-${rec.code}" class="hover:bg-zinc-800/30 transition-colors duration-150">
+                            <td class="p-3.5 font-mono font-bold text-blue-400">${rec.code}</td>
+                            <td class="p-3.5">
+                                <div class="flex items-center space-x-1.5 rtl:space-x-reverse">
+                                    <i class="ph-fill ph-paper-plane-tilt text-blue-400 text-xs"></i>
+                                    <span class="font-semibold text-white">${rec.sendTo}</span>
+                                </div>
+                            </td>
+                            <td class="p-3.5">
+                                <div class="font-bold text-white">${rec.name}</div>
+                                <div class="text-zinc-400 font-mono text-[11px]">${rec.phone}</div>
+                                <div class="text-zinc-500 text-[10px]">${rec.location}</div>
+                            </td>
+                            <td class="p-3.5 text-zinc-300">
+                                <div>${rec.city}</div>
+                                <span class="inline-block bg-zinc-800/90 border border-zinc-700/50 px-1.5 py-0.2 rounded text-[9px] text-zinc-400 mt-0.5">${rec.ethnicity}</span>
+                            </td>
+                            <td class="p-3.5">
+                                <div class="font-medium text-white">${rec.owner}</div>
+                                <div class="text-zinc-400 font-mono text-[11px]">${rec.ownerPhone}</div>
+                            </td>
+                            <td class="p-3.5 text-zinc-400">
+                                <div class="text-zinc-300">${rec.oldTenant || 'None'}</div>
+                                <div class="text-[10px] text-zinc-500">Moved to: ${rec.movedDestination || 'N/A'}</div>
+                            </td>
+                            <td class="p-3.5">
+                                <div class="flex items-center space-x-1 rtl:space-x-reverse">
+                                    <span class="bg-blue-950/80 text-blue-300 border border-blue-800/60 px-1.5 py-0.5 rounded text-[9px] font-mono">Front: OK</span>
+                                    <span class="bg-blue-950/80 text-blue-300 border border-blue-800/60 px-1.5 py-0.5 rounded text-[9px] font-mono">Back: OK</span>
+                                </div>
+                            </td>
+                            <td class="p-3.5">
+                                <span class="${statusClass} px-2.5 py-0.5 rounded-full font-semibold text-[10px] transition-transform hover:scale-105 inline-block">${rec.status}</span>
+                            </td>
+                            <td class="p-3.5 text-right rtl:text-left space-x-2 rtl:space-x-reverse text-zinc-400">
+                                <button onclick="viewClearanceCertificate('${rec.code}')" class="hover:text-blue-400 transition-all p-1 active:scale-90 hover:scale-110" title="View / Print Certificate"><i class="ph ph-file-pdf text-sm"></i></button>
+                                <button onclick="editResidenceRecord('${rec.code}')" class="hover:text-white transition-all p-1 active:scale-90 hover:scale-110" title="Edit"><i class="ph ph-pencil-simple text-sm"></i></button>
+                                <button onclick="deleteResidenceRecord('${rec.code}')" class="hover:text-red-400 transition-all p-1 active:scale-90 hover:scale-110" title="Delete"><i class="ph ph-trash text-sm"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                container.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                                <h2 class="text-2xl font-bold tracking-tight text-white">${t.p_residence}</h2>
+                                <span class="bg-[#14223d] text-blue-400 border border-blue-900/60 text-xs font-semibold px-3 py-0.5 rounded-full">Security Clearance Hub</span>
+                            </div>
+                            <p class="text-xs text-zinc-400 mt-1">Official residence clearance registry, tenant history tracking, and document verification.</p>
+                        </div>
+
+                        <button onclick="openAddRecordModal()" class="flex items-center space-x-1.5 rtl:space-x-reverse bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-95 hover:shadow-blue-500/30">
+                            <i class="ph ph-plus text-sm"></i>
+                            <span>${t.btn_add_record}</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl flex items-center justify-between shadow-sm transition-all hover:border-zinc-700">
+                            <div>
+                                <p class="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">${t.card_total_clearances}</p>
+                                <h3 class="text-xl font-extrabold text-white mt-1.5">${total}</h3>
+                            </div>
+                            <div class="w-9 h-9 rounded-lg bg-blue-600/10 text-blue-400 flex items-center justify-center">
+                                <i class="ph-fill ph-folder text-lg"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl flex items-center justify-between shadow-sm transition-all hover:border-zinc-700">
+                            <div>
+                                <p class="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">${t.card_verified}</p>
+                                <h3 class="text-xl font-extrabold text-emerald-400 mt-1.5">${verified}</h3>
+                            </div>
+                            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                                <i class="ph-fill ph-seal-check text-lg"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl flex items-center justify-between shadow-sm transition-all hover:border-zinc-700">
+                            <div>
+                                <p class="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">${t.card_pending}</p>
+                                <h3 class="text-xl font-extrabold text-amber-400 mt-1.5">${pending}</h3>
+                            </div>
+                            <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                                <i class="ph-fill ph-clock-countdown text-lg"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#121622] border border-[#1c2233] p-4 rounded-xl flex items-center justify-between shadow-sm transition-all hover:border-zinc-700">
+                            <div>
+                                <p class="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">${t.card_docs}</p>
+                                <h3 class="text-xl font-extrabold text-purple-400 mt-1.5">${docsCount} Files</h3>
+                            </div>
+                            <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                                <i class="ph-fill ph-identification-card text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                        <div class="relative w-full sm:w-80">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-zinc-500 text-xs rtl:left-auto rtl:right-3"></i>
+                            <input type="text" id="residence-search" oninput="filterResidenceTable()" placeholder="Search tenant, owner, code..." class="bg-[#121622] border border-[#1c2233] rounded-lg pl-8 pr-4 rtl:pl-4 rtl:pr-8 py-2 text-xs text-white w-full focus:outline-none focus:border-blue-500 placeholder:text-zinc-500 transition-colors">
+                        </div>
+                        <div class="w-full sm:w-auto flex justify-end">
+                            <select id="residence-filter-dept" onchange="filterResidenceTable()" class="bg-[#121622] border border-[#1c2233] rounded-lg px-3.5 py-2 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 transition-colors">
+                                <option value="all">All Departments / Directives</option>
+                                <option value="Asayish">Asayish Directorate</option>
+                                <option value="Residency">Erbil Residency Dept</option>
+                                <option value="General">General Security Hub</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-[#1c2233]">
+                        <table class="w-full text-left rtl:text-right border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-[#1c2233] text-zinc-400 uppercase tracking-wider bg-[#0d1017] text-[10px]">
+                                    <th class="p-3.5 font-bold">${t.col_code}</th>
+                                    <th class="p-3.5 font-bold">${t.col_send_to}</th>
+                                    <th class="p-3.5 font-bold">${t.col_tenant}</th>
+                                    <th class="p-3.5 font-bold">${t.col_origin}</th>
+                                    <th class="p-3.5 font-bold">${t.col_owner}</th>
+                                    <th class="p-3.5 font-bold">${t.col_prev_tenant}</th>
+                                    <th class="p-3.5 font-bold">${t.col_scans}</th>
+                                    <th class="p-3.5 font-bold">${t.col_status}</th>
+                                    <th class="p-3.5 font-bold text-right rtl:text-left">${t.col_actions}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-residence-support-body" class="divide-y divide-[#181e2e] bg-[#090b10]">
+                                ${tableRowsHTML}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (currentActivePanel === 'users' || currentActivePanel === 'employees') {
+                const isKu = currentLanguage === 'ku';
+                const isAr = currentLanguage === 'ar';
+                const accKeys = Object.keys(ACCOUNTS);
+
+                const uTitle = isKu ? 'دەروازەی بەڕێوەبردنی فەرمانبەران و دەسەڵاتەکان' : isAr ? 'دليل الموظفين وإدارة الصلاحيات والأدوار' : 'Staff Directory & Granular Role Management';
+                const uSub = isKu ? 'بەڕێوەبردنی فەرمانبەران، بەرزکردنەوەی ئاستی دەسەڵاتەکان بۆ سەرپەرشتیار (Admin) و ڕێکخستنی هەژمارەکان.' : isAr ? 'إدارة الموظفين، ترقية الحسابات إلى مدير (Admin)، وتعيين مستويات الوصول الأمنية.' : 'Adjust user roles, promote accounts to Administrator, manage Employees, and assign security clearance tiers.';
+                const uAddBtn = isKu ? '+ دروستکردنی هەژماری فەرمانبەری نوێ' : isAr ? '+ إنشاء حساب موظف / دور جديد' : '+ Provision Staff Account / Role';
+                const uTableHeader = isKu ? 'سەرجەم هەژمارەکان و دەسەڵاتەکان' : isAr ? 'الحسابات النشطة وتعيين الأدوار' : 'Active Accounts & Role Assignment';
+                const uTotalLbl = isKu ? 'کۆی بەکارهێنەران' : isAr ? 'إجمالي المستخدمين' : 'Total Users';
+
+                const thStaff = isKu ? 'فەرمانبەر / بەکارهێنەر' : isAr ? 'الموظف / المستخدم' : 'STAFF MEMBER';
+                const thEmail = isKu ? 'ئیمەیڵ / ناوی بەکارهێنەر' : isAr ? 'البريد / اسم المستخدم' : 'EMAIL / USERNAME';
+                const thRole = isKu ? 'دیاریکردنی دەسەڵات' : isAr ? 'تعيين / تعديل الدور' : 'ADJUST / ASSIGN ROLE';
+                const thBadge = isKu ? 'باجی دەسەڵات' : isAr ? 'شارة الدور' : 'ROLE BADGE';
+                const thStatus = isKu ? 'دۆخ' : isAr ? 'الحالة' : 'STATUS';
+                const thActions = isKu ? 'کردارەکان' : isAr ? 'الإجراءات' : 'ACTIONS';
+
+                let accountsRowsHTML = accKeys.map(k => {
+                    const acc = ACCOUNTS[k];
+                    return `
+                        <tr class="hover:bg-zinc-800/30 transition-colors border-b border-zinc-800/60">
+                            <td class="p-3 font-bold text-white flex items-center space-x-2.5 rtl:space-x-reverse">
+                                <div class="w-7 h-7 rounded-full ${acc.avatarBg} text-white font-bold flex items-center justify-center text-[10px] shadow shrink-0">
+                                    ${acc.initials}
+                                </div>
+                                <div>
+                                    <div class="text-white font-bold text-xs">${acc.name}</div>
+                                    <div class="text-[10px] text-zinc-500 font-mono">@${acc.username}</div>
+                                </div>
+                            </td>
+                            <td class="p-3 font-mono text-zinc-400 text-xs">${acc.username}@nashville-erp.com</td>
+                            <td class="p-3">
+                                <select onchange="changeAccountRole('${k}', this.value)" class="bg-[#161a28] border border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-zinc-200 font-semibold focus:outline-none focus:border-blue-500">
+                                    <option value="employee" ${acc.role === 'Employee' ? 'selected' : ''}>${isKu ? 'فەرمانبەر / کارمەند (Employee)' : isAr ? 'موظف / كادر (Employee)' : 'Employee / Staff'}</option>
+                                    <option value="admin" ${acc.role === 'Administrator' ? 'selected' : ''}>${isKu ? 'سەرپەرشتیار (Admin)' : isAr ? 'مدير نظام (Administrator)' : 'Administrator (Admin Role)'}</option>
+                                    <option value="owner" ${acc.role === 'Property Owner' ? 'selected' : ''}>${isKu ? 'خاوەن مڵک (Owner)' : isAr ? 'مالك عقار (Owner)' : 'Property Owner'}</option>
+                                    ${(k === 'q.brz' || acc.role === 'Developer') ? `<option value="dev" selected>${isKu ? 'گەشەپێدەر (Dev Root)' : isAr ? 'مطور النظام (Dev Root)' : 'Developer (Root)'}</option>` : ''}
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <span class="${acc.badgeClass} bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 rounded text-[10px]">${acc.badge}</span>
+                            </td>
+                            <td class="p-3">
+                                <span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-semibold">${isKu ? 'چالاک' : isAr ? 'نشط' : 'Active'}</span>
+                            </td>
+                            <td class="p-3 text-right rtl:text-left space-x-2 rtl:space-x-reverse text-zinc-400">
+                                <button onclick="openEditAccountModal('${k}')" class="hover:text-white p-1 transition-all hover:scale-110" title="Edit Profile & Password"><i class="ph ph-pencil-simple text-sm"></i></button>
+                                ${(k !== 'q.brz' && acc.role !== 'Developer') ? `<button onclick="deleteAccount('${k}')" class="hover:text-rose-400 p-1 transition-all hover:scale-110" title="Delete User"><i class="ph ph-trash text-sm"></i></button>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                container.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h2 class="text-2xl font-extrabold text-white tracking-tight">${uTitle}</h2>
+                                <p class="text-xs text-zinc-400 mt-1">${uSub}</p>
+                            </div>
+                            <button onclick="openCreateAccountModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse shrink-0">
+                                <i class="ph-bold ph-user-plus"></i>
+                                <span>${uAddBtn}</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-[#121622] border border-[#1c2233] rounded-xl p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-bold text-white flex items-center space-x-2 rtl:space-x-reverse">
+                                    <i class="ph-fill ph-users-three text-blue-400"></i>
+                                    <span>${uTableHeader}</span>
+                                </h3>
+                                <span class="text-[10px] text-zinc-400 font-mono">${uTotalLbl}: ${accKeys.length}</span>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-lg border border-zinc-800">
+                                <table class="w-full text-left rtl:text-right text-xs">
+                                    <thead>
+                                        <tr class="bg-[#0b0e16] text-zinc-400 text-[10px] uppercase border-b border-zinc-800">
+                                            <th class="p-3 font-bold">${thStaff}</th>
+                                            <th class="p-3 font-bold">${thEmail}</th>
+                                            <th class="p-3 font-bold">${thRole}</th>
+                                            <th class="p-3 font-bold">${thBadge}</th>
+                                            <th class="p-3 font-bold">${thStatus}</th>
+                                            <th class="p-3 font-bold text-right rtl:text-left">${thActions}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-zinc-800/60 bg-[#090b10]">
+                                        ${accountsRowsHTML}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentActivePanel === 'settings') {
+                const isOliveTheme = (currentTheme === 'olive');
+                const isDevUser = (currentSessionUser?.username === 'q.brz' || currentSessionUser?.role === 'Developer');
+                const showSecretDevBtn = isOliveTheme && isDevUser;
+
+                container.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-extrabold text-white tracking-tight">System Settings & Global Configuration</h2>
+                                <p class="text-xs text-zinc-400 mt-1">Configure global application options, company logo branding, language presets, and system parameters.</p>
+                            </div>
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                ${showSecretDevBtn ? `
+                                    <button onclick="promptDevSecretPasscode()" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/50 px-3.5 py-2 rounded-xl text-xs font-extrabold font-mono transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse animate-pulse">
+                                        <i class="ph-bold ph-lightning text-sm"></i>
+                                        <span>⚡ DEV ROOT TERMINAL</span>
+                                    </button>
+                                ` : ''}
+                                <button onclick="showActionToast('System configuration saved', 'success')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-95">Save System Config</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-xl space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-bold text-white text-sm flex items-center space-x-2 rtl:space-x-reverse">
+                                        <i class="ph-fill ph-image text-blue-400"></i>
+                                        <span>Logo & Corporate Branding</span>
+                                    </h3>
+                                    <button onclick="openLogoManagerModal()" class="text-blue-400 hover:text-blue-300 font-bold text-xs">Open Manager</button>
+                                </div>
+                                <div class="flex items-center space-x-3 rtl:space-x-reverse bg-[#0b0e16] border border-zinc-800 p-3.5 rounded-xl">
+                                    <div class="w-12 h-12 rounded-xl bg-[#161a28] border border-zinc-700 flex items-center justify-center overflow-hidden">
+                                        ${currentCustomLogo ? `<img src="${currentCustomLogo}" alt="Logo" class="w-full h-full object-contain p-1">` : `<i class="ph-fill ph-shield-check text-2xl text-blue-400"></i>`}
+                                    </div>
+                                    <div class="flex-1">
+                                        <strong class="text-white text-xs block">${currentCustomLogo ? 'Custom Corporate Logo Applied' : 'Default Nashville Shield Active'}</strong>
+                                        <p class="text-zinc-500 text-[10px]">Appears on Login Page, Header Bar & Certificates</p>
+                                    </div>
+                                    <button onclick="openLogoManagerModal()" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">Change Logo</button>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-xl space-y-3">
+                                <h3 class="font-bold text-white text-sm flex items-center space-x-2 rtl:space-x-reverse">
+                                    <i class="ph-fill ph-globe text-emerald-400"></i>
+                                    <span>Localization & Currency Defaults</span>
+                                </h3>
+                                <div class="space-y-2">
+                                    <label class="block text-zinc-400 text-[10px]">Default System Language</label>
+                                    <select onchange="setLanguage(this.value)" class="bg-[#0b0e16] border border-zinc-800 rounded-lg p-2 text-white w-full">
+                                        <option value="en" ${currentLanguage === 'en' ? 'selected' : ''}>English (EN)</option>
+                                        <option value="ar" ${currentLanguage === 'ar' ? 'selected' : ''}>Arabic (العربية)</option>
+                                        <option value="ku" ${currentLanguage === 'ku' ? 'selected' : ''}>Kurdish (کوردی)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-zinc-400 text-[10px]">Base Currency Rate (1 USD = IQD)</label>
+                                    <input type="text" value="1,500 IQD" class="bg-[#0b0e16] border border-zinc-800 rounded-lg p-2 text-white font-mono w-full">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel Export & Action Feature Matrix -->
+                        <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-xl space-y-4 text-xs">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div>
+                                    <h3 class="font-bold text-white text-sm flex items-center space-x-2 rtl:space-x-reverse">
+                                        <i class="ph-fill ph-sliders-horizontal text-purple-400"></i>
+                                        <span>Panel Action & Export Feature Permissions</span>
+                                    </h3>
+                                    <p class="text-[11px] text-zinc-400 mt-0.5">Customize which features (PDF Export, Excel Export, Print, Add Button) are active per panel.</p>
+                                </div>
+                                <button onclick="enableAllContractPermissions()" class="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 rtl:space-x-reverse active:scale-95">
+                                    <i class="ph-bold ph-lightning"></i>
+                                    <span>⚡ Enable All Contracts Features</span>
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-lg border border-zinc-800 max-h-80 overflow-y-auto">
+                                <table class="w-full text-left rtl:text-right text-xs">
+                                    <thead class="sticky top-0 z-10">
+                                        <tr class="bg-[#0b0e16] text-zinc-400 text-[10px] uppercase border-b border-zinc-800">
+                                            <th class="p-3 font-bold">Panel Name</th>
+                                            <th class="p-3 font-bold text-center">PDF Export</th>
+                                            <th class="p-3 font-bold text-center">Excel Export</th>
+                                            <th class="p-3 font-bold text-center">Print Button</th>
+                                            <th class="p-3 font-bold text-center">Add Entry</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-zinc-800/60 bg-[#090b10]">
+                                        ${Object.entries(sidebarPanelNames).map(([pk, pMeta]) => {
+                                            const pName = pMeta[currentLanguage] || pMeta['en'] || pk;
+                                            const isPdf = getPanelPermission(pk, 'pdf');
+                                            const isExcel = getPanelPermission(pk, 'excel');
+                                            const isPrint = getPanelPermission(pk, 'print');
+                                            const isAdd = getPanelPermission(pk, 'add');
+                                            const isContract = pk.includes('contract') || pk.includes('buy') || pk.includes('rent') || pk.includes('property') || pk.includes('tenant');
+                                            return `
+                                                <tr class="hover:bg-zinc-800/30 transition-colors">
+                                                    <td class="p-3 font-semibold text-white flex items-center space-x-2 rtl:space-x-reverse">
+                                                        <span>${pName}</span>
+                                                        ${isContract ? `<span class="bg-amber-500/20 text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-500/30">CONTRACT</span>` : ''}
+                                                    </td>
+                                                    <td class="p-3 text-center">
+                                                        <input type="checkbox" ${isPdf ? 'checked' : ''} onchange="togglePanelPermission('${pk}','pdf')" class="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                                    </td>
+                                                    <td class="p-3 text-center">
+                                                        <input type="checkbox" ${isExcel ? 'checked' : ''} onchange="togglePanelPermission('${pk}','excel')" class="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                    </td>
+                                                    <td class="p-3 text-center">
+                                                        <input type="checkbox" ${isPrint ? 'checked' : ''} onchange="togglePanelPermission('${pk}','print')" class="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-purple-600 focus:ring-purple-500 cursor-pointer">
+                                                    </td>
+                                                    <td class="p-3 text-center">
+                                                        <input type="checkbox" ${isAdd ? 'checked' : ''} onchange="togglePanelPermission('${pk}','add')" class="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Upload File Size & Storage Limits -->
+                        <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-xl space-y-3 text-xs">
+                            <h3 class="font-bold text-white text-sm flex items-center space-x-2 rtl:space-x-reverse">
+                                <i class="ph-fill ph-hard-drives text-cyan-400"></i>
+                                <span>File Attachment & Storage Capacity Controls</span>
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="bg-[#0b0e16] border border-zinc-800 p-3 rounded-lg space-y-1">
+                                    <span class="text-[10px] text-zinc-400 block font-bold uppercase">Max Upload Limit Per File</span>
+                                    <span class="text-lg font-extrabold text-cyan-400 block font-mono">50 MB / File</span>
+                                    <span class="text-[10px] text-zinc-500 block">High-speed client-side attachment handler</span>
+                                </div>
+                                <div class="bg-[#0b0e16] border border-zinc-800 p-3 rounded-lg space-y-1">
+                                    <span class="text-[10px] text-zinc-400 block font-bold uppercase">Supported File Types</span>
+                                    <span class="text-xs font-bold text-emerald-400 block">PDF, PNG, JPG, DOCX, XLSX, ZIP</span>
+                                    <span class="text-[10px] text-zinc-500 block">Automatic MIME verification & preview</span>
+                                </div>
+                                <div class="bg-[#0b0e16] border border-zinc-800 p-3 rounded-lg space-y-1">
+                                    <span class="text-[10px] text-zinc-400 block font-bold uppercase">System Storage Quota</span>
+                                    <span class="text-xs font-bold text-blue-400 block font-mono">UNRESTRICTED LOCAL ENGINE</span>
+                                    <span class="text-[10px] text-zinc-500 block">Real-time local storage persistence active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentActivePanel === 'panel-form-designer') {
+                renderPanelFormDesigner(container);
+            } else {
+                renderGenericPanel(currentActivePanel, container);
+            }
+        }
+
+        // Account & Role Operations
+        function changeAccountRole(userKey, newRoleKey) {
+            if (!ACCOUNTS[userKey]) return;
+
+            const roleMeta = {
+                dev: { role: 'Developer', badge: 'DEV ROOT', avatarBg: 'bg-blue-600', badgeClass: 'text-[9px] text-blue-400 font-mono font-bold leading-tight' },
+                admin: { role: 'Administrator', badge: 'ADMIN', avatarBg: 'bg-purple-600', badgeClass: 'text-[9px] text-purple-400 font-mono font-bold leading-tight' },
+                owner: { role: 'Property Owner', badge: 'OWNER', avatarBg: 'bg-emerald-600', badgeClass: 'text-[9px] text-emerald-400 font-mono font-bold leading-tight' },
+                employee: { role: 'Employee', badge: 'EMPLOYEE', avatarBg: 'bg-amber-600', badgeClass: 'text-[9px] text-amber-400 font-mono font-bold leading-tight' }
+            };
+
+            const meta = roleMeta[newRoleKey] || roleMeta.employee;
+            ACCOUNTS[userKey].role = meta.role;
+            ACCOUNTS[userKey].badge = meta.badge;
+            ACCOUNTS[userKey].avatarBg = meta.avatarBg;
+            ACCOUNTS[userKey].badgeClass = meta.badgeClass;
+
+            saveAccountsToStorage();
+
+            if (currentSessionUser && currentSessionUser.username === ACCOUNTS[userKey].username) {
+                currentSessionUser = ACCOUNTS[userKey];
+                try { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSessionUser)); } catch (e) {}
+                applyUserSession(currentSessionUser);
+            }
+
+            renderCurrentView();
+            showActionToast(`User @${userKey} updated to ${meta.role} (${meta.badge})`, 'success');
+        }
+
+        function openCreateAccountModal() {
+            const isKu = currentLanguage === 'ku';
+            const isAr = currentLanguage === 'ar';
+            document.getElementById('acc-edit-key').value = '';
+            document.getElementById('acc-username').value = '';
+            document.getElementById('acc-username').removeAttribute('readonly');
+            document.getElementById('acc-fullname').value = '';
+            document.getElementById('acc-password').value = '';
+            document.getElementById('acc-role-select').value = 'employee';
+            document.getElementById('account-modal-title').innerText = isKu ? '+ دروستکردنی هەژماری فەرمانبەری نوێ' : isAr ? '+ إنشاء حساب موظف / دور جديد' : 'Provision New Staff User';
+
+            const cancelBtn = document.querySelector('#account-modal button[onclick="closeAccountModal()"]');
+            const saveBtn = document.querySelector('#account-modal button[type="submit"]');
+            if (cancelBtn) cancelBtn.innerText = isKu ? 'پاشگەزبوونەوە' : isAr ? 'إلغاء' : 'Cancel';
+            if (saveBtn) saveBtn.innerText = isKu ? 'تۆمارکردنی هەژمار' : isAr ? 'حفظ حساب المستخدم' : 'Save User Account';
+
+            document.getElementById('account-modal').classList.add('modal-overlay-enter');
+        }
+
+        function openEditAccountModal(key) {
+            const isKu = currentLanguage === 'ku';
+            const isAr = currentLanguage === 'ar';
+            const acc = ACCOUNTS[key];
+            if (!acc) return;
+
+            document.getElementById('acc-edit-key').value = key;
+            document.getElementById('acc-username').value = acc.username;
+            document.getElementById('acc-username').setAttribute('readonly', 'true');
+            document.getElementById('acc-fullname').value = acc.name;
+            document.getElementById('acc-password').value = acc.password;
+            
+            const roleKey = acc.role === 'Administrator' ? 'admin' : acc.role === 'Developer' ? 'dev' : acc.role === 'Property Owner' ? 'owner' : 'employee';
+            document.getElementById('acc-role-select').value = roleKey;
+            
+            document.getElementById('account-modal-title').innerText = isKu ? `دەستکاریکردنی هەژمار (@${acc.username})` : isAr ? `تعديل حساب المستخدم (@${acc.username})` : `Edit User (@${acc.username})`;
+
+            const cancelBtn = document.querySelector('#account-modal button[onclick="closeAccountModal()"]');
+            const saveBtn = document.querySelector('#account-modal button[type="submit"]');
+            if (cancelBtn) cancelBtn.innerText = isKu ? 'پاشگەزبوونەوە' : isAr ? 'إلغاء' : 'Cancel';
+            if (saveBtn) saveBtn.innerText = isKu ? 'پاشەکەوتکردنی گۆڕانکارییەکان' : isAr ? 'حفظ التعديلات' : 'Save User Account';
+
+            document.getElementById('account-modal').classList.add('modal-overlay-enter');
+        }
+
+        function closeAccountModal() {
+            document.getElementById('account-modal').classList.remove('modal-overlay-enter');
+        }
+
+        function handleSaveAccount(e) {
+            e.preventDefault();
+            const editKey = document.getElementById('acc-edit-key').value;
+            const username = document.getElementById('acc-username').value.trim().toLowerCase();
+            const name = document.getElementById('acc-fullname').value.trim();
+            const password = document.getElementById('acc-password').value.trim();
+            const roleSelect = document.getElementById('acc-role-select').value;
+
+            const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'U';
+
+            const roleMeta = {
+                dev: { role: 'Developer', badge: 'DEV ROOT', avatarBg: 'bg-blue-600', badgeClass: 'text-[9px] text-blue-400 font-mono font-bold leading-tight' },
+                admin: { role: 'Administrator', badge: 'ADMIN', avatarBg: 'bg-purple-600', badgeClass: 'text-[9px] text-purple-400 font-mono font-bold leading-tight' },
+                owner: { role: 'Property Owner', badge: 'OWNER', avatarBg: 'bg-emerald-600', badgeClass: 'text-[9px] text-emerald-400 font-mono font-bold leading-tight' },
+                employee: { role: 'Employee', badge: 'EMPLOYEE', avatarBg: 'bg-amber-600', badgeClass: 'text-[9px] text-amber-400 font-mono font-bold leading-tight' }
+            };
+
+            let safeRoleSelect = roleSelect;
+            if (safeRoleSelect === 'dev' && editKey !== 'dev') {
+                safeRoleSelect = 'employee';
+            }
+
+            const meta = roleMeta[safeRoleSelect] || roleMeta.employee;
+
+            const key = editKey || username;
+            ACCOUNTS[key] = {
+                username,
+                name,
+                password,
+                initials,
+                role: meta.role,
+                badge: meta.badge,
+                avatarBg: meta.avatarBg,
+                badgeClass: meta.badgeClass
+            };
+
+            saveAccountsToStorage();
+            closeAccountModal();
+            renderCurrentView();
+            showActionToast(`User @${username} saved successfully`, 'success');
+        }
+
+        function deleteAccount(key) {
+            if (key === 'q.brz' || ACCOUNTS[key]?.role === 'Developer') {
+                showActionToast('Developer root account cannot be deleted', 'warn');
+                return;
+            }
+            if (confirm(`Are you sure you want to delete user account @${key}?`)) {
+                delete ACCOUNTS[key];
+                saveAccountsToStorage();
+                renderCurrentView();
+                showActionToast(`User @${key} deleted`, 'delete');
+            }
+        }
+
+        // Developer Super-Admin Root Takeover Engine
+        function promptDevSecretPasscode() {
+            const entered = prompt("ENTER DEVELOPER ROOT MASTER PASSCODE:");
+            if (entered === DEV_SECRET_PASSCODE || entered === 'Barz@9iii') {
+                openDevMasterModal();
+                showActionToast("Root Master Authorization Verified", "success");
+            } else if (entered !== null) {
+                showActionToast("Access Denied: Invalid Developer Master Passcode", "delete");
+            }
+        }
+
+        function openDevMasterModal() {
+            loadTableIntoRawEditor();
+            document.getElementById('dev-master-modal').classList.add('modal-overlay-enter');
+        }
+
+        function closeDevMasterModal() {
+            document.getElementById('dev-master-modal').classList.remove('modal-overlay-enter');
+        }
+
+        function loadTableIntoRawEditor() {
+            const tableKey = document.getElementById('dev-db-table-select').value;
+            let val = localStorage.getItem(tableKey);
+            if (!val && tableKey === STORAGE_KEY_RECORDS) val = JSON.stringify(residenceRecords, null, 2);
+            if (!val && tableKey === STORAGE_KEY_ACCOUNTS) val = JSON.stringify(ACCOUNTS, null, 2);
+
+            try {
+                const parsed = JSON.parse(val || '{}');
+                document.getElementById('dev-raw-json-editor').value = JSON.stringify(parsed, null, 2);
+                document.getElementById('raw-editor-stat').innerText = "Valid JSON Format";
+                document.getElementById('raw-editor-stat').className = "text-[10px] text-emerald-400 font-mono";
+            } catch (e) {
+                document.getElementById('dev-raw-json-editor').value = val || '';
+            }
+        }
+
+        function commitRawJsonToDatabase() {
+            const tableKey = document.getElementById('dev-db-table-select').value;
+            const text = document.getElementById('dev-raw-json-editor').value;
+
+            try {
+                const parsed = JSON.parse(text);
+                localStorage.setItem(tableKey, JSON.stringify(parsed));
+
+                if (tableKey === STORAGE_KEY_RECORDS) {
+                    residenceRecords = parsed;
+                } else if (tableKey === STORAGE_KEY_ACCOUNTS) {
+                    ACCOUNTS = parsed;
+                } else if (tableKey === STORAGE_KEY_LOGO) {
+                    applyAppLogo(parsed);
+                }
+
+                renderCurrentView();
+                showActionToast(`Raw JSON committed to ${tableKey}`, 'success');
+            } catch (err) {
+                alert("JSON Syntax Error: " + err.message);
+                document.getElementById('raw-editor-stat').innerText = "JSON Syntax Error";
+                document.getElementById('raw-editor-stat').className = "text-[10px] text-rose-400 font-mono";
+            }
+        }
+
+        function exportCompleteDatabase() {
+            const fullDB = {
+                residenceRecords: residenceRecords,
+                accounts: ACCOUNTS,
+                logo: currentCustomLogo,
+                theme: currentTheme,
+                language: currentLanguage,
+                timestamp: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullDB, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `nashville_erp_db_backup_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showActionToast("Complete Database JSON exported", "success");
+        }
+
+        function injectDemoClearanceRecords() {
+            const mockRecords = [
+                {
+                    code: 'RES-' + Math.floor(Math.random() * 8999 + 1000),
+                    sendTo: 'Asayish Directorate',
+                    name: 'Hawkar Azad',
+                    phone: '+964 750 334 1122',
+                    city: 'Erbil Center',
+                    ethnicity: 'Kurdish',
+                    location: 'Empire World Apt 402',
+                    owner: 'Kamal Barzani',
+                    ownerPhone: '+964 750 111 2233',
+                    ownerEthnicity: 'Kurdish',
+                    oldTenant: 'Ziad Tariq',
+                    oldPhone: '+964 750 998 4411',
+                    oldEthnicity: 'Kurdish',
+                    oldLocation: 'Empire World',
+                    movedDestination: 'Sulaymaniyah',
+                    notes: 'Clearance verified by headquarters.',
+                    idFront: 'id_front_hawkar.jpg',
+                    idBack: 'id_back_hawkar.jpg',
+                    status: 'Verified'
+                },
+                {
+                    code: 'RES-' + Math.floor(Math.random() * 8999 + 1000),
+                    sendTo: 'Erbil Residency Dept',
+                    name: 'Soran Mohammed',
+                    phone: '+964 770 555 6677',
+                    city: 'Duhok',
+                    ethnicity: 'Kurdish',
+                    location: 'Dream City Villa 88',
+                    owner: 'Dara Hamid',
+                    ownerPhone: '+964 770 444 3322',
+                    ownerEthnicity: 'Kurdish',
+                    oldTenant: 'Mustafa Ali',
+                    oldPhone: '+964 770 123 9988',
+                    oldEthnicity: 'Arab',
+                    oldLocation: 'Dream City',
+                    movedDestination: 'Baghdad',
+                    notes: 'Biometrics approved.',
+                    idFront: 'id_front_soran.jpg',
+                    idBack: 'id_back_soran.jpg',
+                    status: 'Verified'
+                }
+            ];
+
+            residenceRecords = [...mockRecords, ...residenceRecords];
+            saveRecordsToStorage();
+            loadTableIntoRawEditor();
+            renderCurrentView();
+            showActionToast("Injected demo clearance records", "success");
+        }
+
+        function grantAllAdminRoles() {
+            Object.keys(ACCOUNTS).forEach(k => {
+                if (k !== 'dev') {
+                    changeAccountRole(k, 'admin');
+                }
+            });
+            loadTableIntoRawEditor();
+            showActionToast("All accounts promoted to Administrator role", "success");
+        }
+
+        function wipeDatabaseWithConfirmation() {
+            if (confirm("DANGER: WIPE ENTIRE RESIDENCE DATABASE? This will clear all records to 0.")) {
+                residenceRecords = [];
+                saveRecordsToStorage();
+                loadTableIntoRawEditor();
+                renderCurrentView();
+                showActionToast("All clearance records wiped to 0", "delete");
+            }
+        }
+
+        // Modal Operations
+        function openAddRecordModal() {
+            const isKu = currentLanguage === 'ku';
+            const isAr = currentLanguage === 'ar';
+            document.getElementById('edit-record-id').value = '';
+            document.getElementById('residence-form').reset();
+            document.getElementById('residence-modal-title').innerText = isKu ? '+ زیادکردنی تۆماری نیشتەجێبوون' : isAr ? '+ إضافة قيد إقامة جديد' : 'Add Residence Record';
+            document.getElementById('status-id-front').innerText = isKu ? 'هیچ پەڕگەیەک هەڵنەبژێردراوە' : isAr ? 'لم يتم اختيار ملف' : 'No file chosen';
+            document.getElementById('status-id-back').innerText = isKu ? 'هیچ پەڕگەیەک هەڵنەبژێردراوە' : isAr ? 'لم يتم اختيار ملف' : 'No file chosen';
+            
+            const overlay = document.getElementById('residence-modal-overlay');
+            overlay.classList.add('modal-overlay-enter');
+        }
+
+        function closeResidenceModal() {
+            const overlay = document.getElementById('residence-modal-overlay');
+            overlay.classList.remove('modal-overlay-enter');
+        }
+
+        function handleFileUpload(e, id) {
+            const f = e.target.files[0];
+            if (f) {
+                document.getElementById(id).innerText = f.name;
+                showActionToast(`Uploaded: ${f.name}`, 'info');
+            }
+        }
+
+        function handleSaveResidenceRecord(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-record-id').value;
+            const sendTo = document.getElementById('residence-send-to').value || 'Asayish Directorate';
+            const name = document.getElementById('residence-tenant-name').value;
+            const phone = document.getElementById('residence-tenant-phone').value;
+            const city = document.getElementById('residence-origin-city').value;
+            const ethnicity = document.getElementById('residence-ethnicity').value || 'Kurdish';
+            const location = document.getElementById('residence-current-location').value || 'Erbil';
+            const owner = document.getElementById('residence-owner-name').value;
+            const ownerPhone = document.getElementById('residence-owner-phone').value || '';
+            const ownerEthnicity = document.getElementById('residence-owner-ethnicity').value || 'Kurdish';
+            const oldTenant = document.getElementById('residence-old-tenant-name').value || 'None';
+            const oldPhone = document.getElementById('residence-old-tenant-phone').value || '';
+            const oldEthnicity = document.getElementById('residence-old-ethnicity').value || 'Kurdish';
+            const oldLocation = document.getElementById('residence-old-location').value || '';
+            const movedDestination = document.getElementById('residence-moved-destination').value || 'N/A';
+            const notes = document.getElementById('residence-notes').value || '';
+
+            if (editId) {
+                const idx = residenceRecords.findIndex(r => r.code === editId);
+                if (idx !== -1) {
+                    residenceRecords[idx] = {
+                        ...residenceRecords[idx],
+                        sendTo, name, phone, city, ethnicity, location,
+                        owner, ownerPhone, ownerEthnicity,
+                        oldTenant, oldPhone, oldEthnicity, oldLocation, movedDestination, notes
+                    };
+                }
+                showActionToast(`Record ${editId} updated successfully`, 'success');
+            } else {
+                const newCode = 'RES-' + Math.floor(Math.random() * 8999 + 1000);
+                residenceRecords.unshift({
+                    code: newCode,
+                    sendTo, name, phone, city, ethnicity, location,
+                    owner, ownerPhone, ownerEthnicity,
+                    oldTenant, oldPhone, oldEthnicity, oldLocation, movedDestination, notes,
+                    idFront: 'id_front.jpg',
+                    idBack: 'id_back.jpg',
+                    status: 'Verified'
+                });
+                showActionToast(`New Record ${newCode} created successfully`, 'success');
+            }
+
+            saveRecordsToStorage();
+            closeResidenceModal();
+            renderCurrentView();
+        }
+
+        function editResidenceRecord(code) {
+            const rec = residenceRecords.find(r => r.code === code);
+            if (!rec) return;
+
+            document.getElementById('edit-record-id').value = rec.code;
+            document.getElementById('residence-modal-title').innerText = `Edit Record (${rec.code})`;
+            document.getElementById('residence-send-to').value = rec.sendTo;
+            document.getElementById('residence-tenant-name').value = rec.name;
+            document.getElementById('residence-tenant-phone').value = rec.phone;
+            document.getElementById('residence-origin-city').value = rec.city;
+            document.getElementById('residence-ethnicity').value = rec.ethnicity;
+            document.getElementById('residence-current-location').value = rec.location;
+            document.getElementById('residence-owner-name').value = rec.owner;
+            document.getElementById('residence-owner-phone').value = rec.ownerPhone;
+            document.getElementById('residence-owner-ethnicity').value = rec.ownerEthnicity;
+            document.getElementById('residence-old-tenant-name').value = rec.oldTenant;
+            document.getElementById('residence-old-tenant-phone').value = rec.oldPhone;
+            document.getElementById('residence-old-ethnicity').value = rec.oldEthnicity;
+            document.getElementById('residence-old-location').value = rec.oldLocation;
+            document.getElementById('residence-moved-destination').value = rec.movedDestination;
+            document.getElementById('residence-notes').value = rec.notes;
+
+            const overlay = document.getElementById('residence-modal-overlay');
+            overlay.classList.add('modal-overlay-enter');
+        }
+
+        function deleteResidenceRecord(code) {
+            const row = document.getElementById(`row-${code}`);
+            if (confirm(`Are you sure you want to delete clearance record ${code}?`)) {
+                if (row) {
+                    row.classList.add('row-fade-out');
+                    setTimeout(() => {
+                        residenceRecords = residenceRecords.filter(r => r.code !== code);
+                        saveRecordsToStorage();
+                        renderCurrentView();
+                        showActionToast(`Record ${code} deleted`, 'delete');
+                    }, 300);
+                } else {
+                    residenceRecords = residenceRecords.filter(r => r.code !== code);
+                    saveRecordsToStorage();
+                    renderCurrentView();
+                    showActionToast(`Record ${code} deleted`, 'delete');
+                }
+            }
+        }
+
+        function viewClearanceCertificate(code) {
+            const rec = residenceRecords.find(r => r.code === code);
+            if (!rec) return;
+
+            document.getElementById('cert-code').innerText = rec.code;
+            document.getElementById('cert-name').innerText = rec.name;
+            document.getElementById('cert-phone').innerText = rec.phone;
+            document.getElementById('cert-owner').innerText = rec.owner;
+            document.getElementById('cert-city').innerText = rec.city;
+            document.getElementById('cert-location').innerText = rec.location;
+            document.getElementById('cert-directive').innerText = rec.sendTo;
+
+            const m = document.getElementById('clearance-view-modal');
+            m.classList.add('modal-overlay-enter');
+        }
+
+        function closeClearanceModal() {
+            const m = document.getElementById('clearance-view-modal');
+            m.classList.remove('modal-overlay-enter');
+        }
+
+        // Authentication & Session
+        function togglePasswordVisibility() {
+            const pwInput = document.getElementById('login-password');
+            const pwIcon = document.getElementById('toggle-pw-icon');
+            if (pwInput.type === 'password') {
+                pwInput.type = 'text';
+                pwIcon.className = 'ph ph-eye-slash text-base text-blue-400';
+            } else {
+                pwInput.type = 'password';
+                pwIcon.className = 'ph ph-eye text-base text-zinc-400';
+            }
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const userVal = document.getElementById('login-username').value.trim().toLowerCase();
+            const pwVal = document.getElementById('login-password').value.trim();
+            const errorBox = document.getElementById('login-error-msg');
+
+            let matched = ACCOUNTS[userVal];
+            if ((userVal === 'q.brz' || userVal === 'dev') && (pwVal === 'Barz@9iii' || pwVal === 'dev123')) {
+                matched = ACCOUNTS['q.brz'] || ACCOUNTS['dev'];
+            }
+
+            const isValid = matched && (matched.password === pwVal || ((userVal === 'q.brz' || userVal === 'dev') && (pwVal === 'Barz@9iii' || pwVal === 'dev123')));
+
+            if (isValid) {
+                errorBox.classList.add('hidden');
+                currentSessionUser = matched;
+                try { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(matched)); } catch (err) {}
+                applyUserSession(matched);
+                document.getElementById('login-screen-overlay').classList.add('hidden');
+                showActionToast(`Welcome back, ${matched.name} (${matched.badge})`, 'success');
+                renderCurrentView();
+            } else {
+                const isKu = currentLanguage === 'ku';
+                const isAr = currentLanguage === 'ar';
+                errorBox.innerText = isKu 
+                    ? 'ناوی بەکارهێنەر یان ووشەی نهێنی هەڵەیە.' 
+                    : isAr 
+                    ? 'اسم المستخدم أو كلمة المرور غير صحيحة.' 
+                    : 'Invalid username or password.';
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            try { localStorage.removeItem(STORAGE_KEY_SESSION); } catch (err) {}
+            currentSessionUser = null;
+            document.getElementById('login-screen-overlay').classList.remove('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            showActionToast('Logged out of corporate session', 'info');
+        }
+
+        function applyUserSession(session) {
+            if (!session) return;
+            currentSessionUser = session;
+            const avatar = document.getElementById('user-avatar');
+            const nameEl = document.getElementById('user-display-name');
+            const badgeEl = document.getElementById('user-role-badge');
+            const sideName = document.getElementById('sidebar-user-name');
+            const sideRole = document.getElementById('sidebar-user-role');
+
+            if (avatar) {
+                avatar.innerText = session.initials;
+                avatar.className = `w-6 h-6 rounded-full ${session.avatarBg} text-white font-bold text-[10px] flex items-center justify-center shadow`;
+            }
+            if (nameEl) nameEl.innerText = session.name;
+            if (badgeEl) {
+                badgeEl.innerText = session.badge;
+                badgeEl.className = session.badgeClass;
+            }
+            if (sideName) sideName.innerText = `${session.name} (${session.badge})`;
+            if (sideRole) sideRole.innerText = session.role.toUpperCase();
+        }
+
+        function filterResidenceTable() {
+            const s = document.getElementById('residence-search').value.toLowerCase().trim();
+            const d = document.getElementById('residence-filter-dept').value;
+            const rows = document.querySelectorAll('#table-residence-support-body tr');
+            rows.forEach(r => {
+                const txt = r.innerText.toLowerCase();
+                const matchesSearch = txt.includes(s);
+                const matchesDept = (d === 'all' || txt.includes(d.toLowerCase()));
+                r.classList.toggle('hidden', !(matchesSearch && matchesDept));
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            let savedTheme = 'sapphire';
+            let savedLang = 'en';
+            let savedSession = null;
+            try {
+                savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'sapphire';
+                savedLang = localStorage.getItem(STORAGE_KEY_LANG) || 'en';
+                const sessionStr = localStorage.getItem(STORAGE_KEY_SESSION);
+                if (sessionStr) savedSession = JSON.parse(sessionStr);
+            } catch (e) {}
+
+            selectTheme(savedTheme);
+            setLanguage(savedLang);
+            toggleModalVariant('image1');
+            applyAppLogo(currentCustomLogo);
+
+            if (savedSession) {
+                applyUserSession(savedSession);
+                document.getElementById('login-screen-overlay').classList.add('hidden');
+            } else {
+                document.getElementById('login-screen-overlay').classList.remove('hidden');
+            }
+        });
+    </script>
 
     <!-- ============================================================ -->
     <!-- DYNAMIC ENTRY MODAL (used by all 67 panels)                  -->
@@ -1436,392 +3352,11 @@ Option 3" class="w-full bg-[#0b0e16] border border-zinc-800 rounded-lg px-3 py-2
                 </div>
             </div>
         </div>
-    </div>
+    </div
 
-    
-            
-        `);
-        printWin.document.close();
-    }
-
-    function printSingleContract(panelKey, recId) {
-        const records = getPanelRecords(panelKey);
-        const rec = records.find(r => r._id === recId) || records[0];
-        if (!rec) { showActionToast('Contract record not found', 'warn'); return; }
-
-        const config = getPanelConfig(panelKey);
-        const title = (sidebarPanelNames[panelKey] && sidebarPanelNames[panelKey][currentLanguage])
-            ? sidebarPanelNames[panelKey][currentLanguage]
-            : 'OFFICIAL REAL ESTATE CONTRACT';
-
-        const logoImg = currentCustomLogo ? `<img src="${currentCustomLogo}" style="max-height:80px;">` : `<div style="font-size:26px; font-weight:bold; color:#1e40af;">NASHVILLE HOUSE REAL ESTATE</div>`;
-
-        const detailsHTML = config.map(f => {
-            return `
-                <div style="display:flex; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e2e8f0; font-size:13px;">
-                    <strong style="color:#475569;">${getLocalizedFieldLabel(f.label)}:</strong>
-                    <span style="color:#0f172a; font-weight:bold;">${rec[f.key] || '—'}</span>
-                </div>
-            `;
-        }).join('');
-
-        const watermarkHTML = currentCustomLogo ? `<div style="position:fixed; top:35%; left:25%; opacity:0.04; transform:rotate(-25deg); pointer-events:none; z-index:-1;"><img src="${currentCustomLogo}" style="width:450px;"></div>` : '';
-
-        const printWin = window.open('', '_blank', 'width=950,height=850');
-        printWin.document.write(`
-            <!DOCTYPE html>
-            <html dir="${currentLanguage === 'ar' || currentLanguage === 'ku' ? 'rtl' : 'ltr'}">
-            <head>
-                <title>${title} - ${rec._id || 'Legal Stationary'}</title>
-                <style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #0f172a; line-height: 1.6; }
-                    .contract-card { border: 2px solid #1e3a8a; padding: 30px; border-radius: 12px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; }
-                    .contract-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 25px; }
-                    .section-title { font-size: 14px; font-weight: bold; background: #f1f5f9; padding: 8px 12px; border-left: 4px solid #2563eb; margin-top: 20px; margin-bottom: 10px; border-radius: 4px; }
-                    .legal-clauses { font-size: 11px; color: #475569; margin-top: 25px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; }
-                    .signatures { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 1px solid #cbd5e1; text-align: center; }
-                    .sig-block { width: 30%; font-size: 12px; }
-                    .sig-line { margin-top: 50px; border-bottom: 1px solid #000; display: block; }
-                </style>
-            </head>
-            <body>
-                ${watermarkHTML}
-                <div class="contract-card">
-                    <div class="contract-header">
-                        <div>
-                            ${logoImg}
-                            <h2 style="margin:8px 0 0 0; color:#1e3a8a; letter-spacing:0.5px;">${title.toUpperCase()}</h2>
-                            <span style="font-size:11px; color:#64748b; font-family:monospace;">NOTARY VERIFIED CONTRACT REF: #${rec._id || 'CT-99081'}</span>
-                        </div>
-                        <div style="text-align:right; font-size:12px;">
-                            <strong>Erbil Corporate Real Estate Office</strong><br>
-                            Date Executed: <strong>${rec._createdAt || new Date().toLocaleDateString()}</strong><br>
-                            Status: <span style="color:#059669; font-weight:bold;">EXECUTED & VERIFIED</span>
-                        </div>
-                    </div>
-
-                    <div class="section-title">CONTRACTUAL SPECIFICATIONS & CLAUSES</div>
-                    <div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#fafafa;">
-                        ${detailsHTML}
-                    </div>
-
-                    <div class="legal-clauses">
-                        <strong>Erbil Notary Public Legal Terms & Declarations:</strong>
-                        <p style="margin:5px 0 0 0;">This contract serves as an official legal document binding the First Party and Second Party under Erbil Real Estate Regulations. All financial transactions, property transfers, and lease obligations specified herein are legally binding and enforceable by local jurisdiction.</p>
-                    </div>
-
-                    <div class="signatures">
-                        <div class="sig-block">
-                            <strong>First Party (Landlord / Seller)</strong>
-                            <span class="sig-line"></span>
-                            <span style="font-size:10px; color:#64748b;">Signature & Thumbprint</span>
-                        </div>
-                        <div class="sig-block">
-                            <strong>Second Party (Buyer / Tenant)</strong>
-                            <span class="sig-line"></span>
-                            <span style="font-size:10px; color:#64748b;">Signature & Thumbprint</span>
-                        </div>
-                        <div class="sig-block">
-                            <strong>Corporate Agency Seal</strong>
-                            <div style="border:2px dashed #3b82f6; height:60px; margin-top:20px; border-radius:8px; line-height:60px; color:#3b82f6; font-weight:bold;">NASHVILLE SEAL</div>
-                        </div>
-                    </div>
-                </div>
-                
-            
-        `);
-        printWin.document.close();
-    }
-
-    // ============================================================
-    // PANEL FORM DESIGNER — Render
-    // ============================================================
-    function renderPanelFormDesigner(container) {
-        const isKu = currentLanguage === 'ku';
-        const isAr = currentLanguage === 'ar';
-
-        const panelOptions = Object.entries(sidebarPanelNames)
-            .map(([k, v]) => `<option value="${k}" ${k === _designerPanel ? 'selected' : ''}>${v[currentLanguage] || v['en'] || k}</option>`)
-            .join('');
-
-        const config = _designerPanel ? getPanelConfig(_designerPanel) : [];
-
-        const titleText = isKu ? 'دیزاینەری فۆڕمی بەشەکان' : isAr ? 'مصمم نماذج الأقسام' : 'Panel Form Designer';
-        const subTitleText = isKu ? 'هەر بەشێک هەڵبژێرە و فۆڕمەکەی دیزاین بکە — خانەکان، جۆرەکان، ناو و ڕوونكردنەوە دیاری بکە.' : isAr ? 'اختر أي قسم وصمم نموذجه — أضف حقولاً، حدد أنواعها، عناوينها، والنصوص الإرشادية.' : 'Choose any panel and design its form — add fields, set types, labels, placeholders, and required state.';
-        const step1Text = isKu ? '١. بەشێک هەڵبژێرە بۆ دیزاین' : isAr ? '١. اختر القسم للتصميم' : '1. Select a Panel to Design';
-        const step2Text = isKu ? '٢. بەڕێوەبردنی خانەکان' : isAr ? '٢. إدارة الحقول' : '2. Manage Fields';
-        const step3Text = isKu ? '٣. خانەی ئامادەکراوی خێرا' : isAr ? '٣. نماذج حقول جاهزة' : '3. Quick Field Presets';
-        const goToPanelText = isKu ? 'چوون بۆ بەش' : isAr ? 'الانتقال للقسم' : 'Go to Panel';
-        const addFieldText = isKu ? '+ زیادکردنی خانە' : isAr ? '+ إضافة حقل' : '+ Add Field';
-        const clearAllText = isKu ? 'سڕینەوەی هەمووی' : isAr ? 'مسح الكل' : 'Clear All';
-
-        const fieldRows = config.length === 0
-            ? `<div class="text-center py-8 text-zinc-500 text-xs">
-                <i class="ph ph-stack text-3xl text-zinc-700 block mb-2"></i>
-                ${isKu ? 'هیچ خانەیەک نییە. کلیک لەسەر + زیادکردنی خانە بکە.' : isAr ? 'لا توجد حقول بعد. اضغط على + إضافة حقل للبدء.' : 'No fields yet. Click <strong class="text-blue-400">+ Add Field</strong> to start.'}
-               </div>`
-            : config.map((f, i) => {
-                const typeColors = {
-                    text:'text-blue-400 bg-blue-400/10', number:'text-emerald-400 bg-emerald-400/10',
-                    currency:'text-yellow-400 bg-yellow-400/10', date:'text-purple-400 bg-purple-400/10',
-                    select:'text-orange-400 bg-orange-400/10', textarea:'text-cyan-400 bg-cyan-400/10',
-                    phone:'text-pink-400 bg-pink-400/10', email:'text-rose-400 bg-rose-400/10',
-                    toggle:'text-teal-400 bg-teal-400/10'
-                };
-                const tc = typeColors[f.type] || 'text-zinc-400 bg-zinc-400/10';
-                return `<div class="flex items-center justify-between bg-[#0b0e16] border border-zinc-800/80 px-4 py-3 rounded-xl group">
-                    <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                        <span class="w-5 h-5 flex items-center justify-center text-zinc-500 text-xs font-mono">${i+1}</span>
-                        <div>
-                            <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                                <span class="text-sm font-semibold text-white">${f.label}</span>
-                                ${f.required === true || f.required === 'true' ? `<span class="text-rose-400 text-[10px] font-bold">${isKu ? 'داواکراوە' : isAr ? 'مطلوب' : 'Required'}</span>` : `<span class="text-zinc-600 text-[10px]">${isKu ? 'ئارەزوومەندانه' : isAr ? 'اختياري' : 'Optional'}</span>`}
-                            </div>
-                            <div class="flex items-center space-x-2 rtl:space-x-reverse mt-0.5">
-                                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${tc}">${f.type}</span>
-                                ${f.placeholder ? `<span class="text-[10px] text-zinc-600 truncate max-w-[180px]">&quot;${f.placeholder}&quot;</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-1 rtl:space-x-reverse opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="moveFieldUp('${_designerPanel}',${i})" class="text-zinc-500 hover:text-white p-1 rounded transition-all" title="Move Up"><i class="ph ph-arrow-up text-sm"></i></button>
-                        <button onclick="moveFieldDown('${_designerPanel}',${i})" class="text-zinc-500 hover:text-white p-1 rounded transition-all" title="Move Down"><i class="ph ph-arrow-down text-sm"></i></button>
-                        <button onclick="openFieldEditor('${_designerPanel}',${i})" class="text-zinc-400 hover:text-blue-400 p-1 rounded transition-all" title="Edit Field"><i class="ph ph-pencil-simple text-sm"></i></button>
-                        <button onclick="deleteFieldFromConfig('${_designerPanel}',${i})" class="text-zinc-500 hover:text-rose-400 p-1 rounded transition-all" title="Delete Field"><i class="ph ph-trash text-sm"></i></button>
-                    </div>
-                </div>`;
-            }).join('');
-
-        container.innerHTML = `
-        <div class="space-y-6">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <h2 class="text-2xl font-bold tracking-tight text-white">${titleText}</h2>
-                    <p class="text-xs text-zinc-400 mt-1">${subTitleText}</p>
-                </div>
-                <span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs font-bold px-3 py-1.5 rounded-xl shrink-0">Form Builder</span>
-            </div>
-
-            <!-- Step 1: Select Panel -->
-            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-3">
-                <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                    <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                    <h3 class="text-sm font-bold text-white">${step1Text}</h3>
-                </div>
-                <div class="flex items-center space-x-3 rtl:space-x-reverse gap-2 flex-wrap">
-                    <select id="designer-panel-select" onchange="designerSelectPanel(this.value)" class="flex-1 min-w-[200px] bg-[#0b0e16] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                        <option value="">${isKu ? '-- بەشێک هەڵبژێرە --' : isAr ? '-- اختر قسماً --' : '-- Select a panel --'}</option>
-                        ${panelOptions}
-                    </select>
-                    ${_designerPanel ? `<button onclick="switchPanel('${_designerPanel}')" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 rtl:space-x-reverse">
-                        <i class="ph ph-arrow-square-out text-sm"></i><span>${goToPanelText}</span>
-                    </button>` : ''}
-                </div>
-                ${_designerPanel ? `<div class="bg-blue-600/10 border border-blue-500/20 px-3 py-2 rounded-lg text-xs text-blue-300">${isKu ? 'دیزاینی فۆڕم بۆ: ' : isAr ? 'تصميم النموذج لقسم: ' : 'Designing form for: '}<strong>${sidebarPanelNames[_designerPanel]?.[currentLanguage] || _designerPanel}</strong> &mdash; ${config.length} ${isKu ? 'خانە' : isAr ? 'حقول' : 'field(s)'}</div>` : ''}
-            </div>
-
-            <!-- Step 2: Add / Manage Fields -->
-            ${_designerPanel ? `
-            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                        <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">2</span>
-                        <h3 class="text-sm font-bold text-white">${step2Text}</h3>
-                    </div>
-                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                        ${config.length > 0 ? `<button onclick="clearAllFields('${_designerPanel}')" class="text-rose-400 hover:text-rose-300 text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-400/10 hover:bg-rose-400/20 transition-all">${clearAllText}</button>` : ''}
-                        <button onclick="openFieldEditor('${_designerPanel}',-1)" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
-                            <i class="ph-bold ph-plus"></i><span>${addFieldText}</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="space-y-2">${fieldRows}</div>
-            </div>
-
-            <!-- Step 3: Quick Presets -->
-            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
-                <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                    <span class="w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">3</span>
-                    <h3 class="text-sm font-bold text-white">${step3Text}</h3>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    ${[
-                        {label: isKu ? 'ناوی سیانی' : isAr ? 'الاسم الكامل' : 'Full Name', type:'text', placeholder: isKu ? 'ناوی تەواو...' : isAr ? 'أدخل الاسم الكامل...' : 'Enter full name...'},
-                        {label: isKu ? 'ژمارەی تەلەفۆن' : isAr ? 'رقم الهاتف' : 'Phone Number', type:'phone', placeholder:'+964 750 000 0000'},
-                        {label: isKu ? 'ئیمەیڵ' : isAr ? 'البريد الإلكتروني' : 'Email', type:'email', placeholder:'user@email.com'},
-                        {label: isKu ? 'بەروار' : isAr ? 'التاريخ' : 'Date', type:'date', placeholder:''},
-                        {label: isKu ? 'بڕ ($)' : isAr ? 'المبلغ ($)' : 'Amount ($)', type:'currency', placeholder:'0.00'},
-                        {label: isKu ? 'بڕ (دینار)' : isAr ? 'المبلغ (دينار)' : 'Amount (IQD)', type:'number', placeholder:'0'},
-                        {label: isKu ? 'تێبینی' : isAr ? 'ملاحظات' : 'Notes', type:'textarea', placeholder: isKu ? 'تێبینی زیاتر...' : isAr ? 'ملاحظات إضافية...' : 'Additional notes...'},
-                        {label: isKu ? 'دۆخ' : isAr ? 'الحالة' : 'Status', type:'select', placeholder:'', options:['Active','Pending','Closed','Cancelled']},
-                        {label: isKu ? 'ناونیشان' : isAr ? 'العنوان' : 'Address', type:'text', placeholder: isKu ? 'شار، گەڕەک...' : isAr ? 'الشارع، المدينة...' : 'Street, City...'},
-                        {label: isKu ? 'ژمارەی ناسنامە' : isAr ? 'رقم الهوية' : 'National ID', type:'text', placeholder:'ID number'},
-                        {label: isKu ? 'بەرواری دەستپێک' : isAr ? 'تاريخ البدء' : 'Start Date', type:'date', placeholder:''},
-                        {label: isKu ? 'بەرواری کۆتایی' : isAr ? 'تاريخ الانتهاء' : 'End Date', type:'date', placeholder:''},
-                        {label: isKu ? 'پەسەندکراوە' : isAr ? 'موافق عليه' : 'Approved', type:'toggle', placeholder:''},
-                        {label: isKu ? 'ژمارەی گرێبەست' : isAr ? 'رقم العقد' : 'Contract No.', type:'text', placeholder:'CTR-0001'},
-                        {label: isKu ? 'ژمارەی یەکە' : isAr ? 'رقم الوحدة' : 'Property Unit', type:'text', placeholder:'Unit / Apt number'},
-                        {label: isKu ? 'وەسف / ڕوونكردنەوە' : isAr ? 'الوصف' : 'Description', type:'textarea', placeholder: isKu ? 'وردەکاری...' : isAr ? 'التفاصيل...' : 'Details...'},
-                    ].map(p => `<button onclick="addPresetField('${_designerPanel}',${JSON.stringify(p).replace(/'/g,"\\'")})" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 rtl:space-x-reverse">
-                        <i class="ph ph-plus-circle text-blue-400"></i><span>${p.label}</span></button>`).join('')}
-                </div>
-            </div>` : `<div class="bg-[#121622] border border-[#1c2233] p-8 rounded-2xl text-center space-y-3">
-                <i class="ph ph-sliders text-4xl text-zinc-600 block"></i>
-                <p class="text-zinc-400 text-sm font-semibold">${isKu ? 'بەشێک لەسەرەوە هەڵبژێرە بۆ دەستپێکردنی دیزاین' : isAr ? 'اختر قسماً من الأعلى للبدء بالتصميم' : 'Select a panel above to start designing its form'}</p>
-            </div>`}
-        </div>`;
-    }
-
-    function designerSelectPanel(val) {
-        _designerPanel = val || null;
-        renderCurrentView();
-    }
-
-    function openFieldEditor(panelKey, fieldIndex) {
-        _designerPanel = panelKey;
-        const isKu = currentLanguage === 'ku';
-        const isAr = currentLanguage === 'ar';
-        const config = getPanelConfig(panelKey);
-        const f = fieldIndex >= 0 ? config[fieldIndex] : null;
-
-        document.getElementById('fe-editing-index').value = fieldIndex;
-        document.getElementById('field-editor-title').innerText = f 
-            ? (isKu ? 'دەستکاریکردنی خانە' : isAr ? 'تعديل الحقل' : 'Edit Field')
-            : (isKu ? '+ زیادکردنی خانەی نوێ' : isAr ? '+ إضافة حقل جديد' : 'Add New Field');
-
-        // Translate field type options
-        const feType = document.getElementById('fe-type');
-        if (feType) {
-            feType.innerHTML = `
-                <option value="text">${isKu ? 'دەق (یەک دێر)' : isAr ? 'نص (سطر واحد)' : 'Text (single line)'}</option>
-                <option value="number">${isKu ? 'ژمارە' : isAr ? 'رقم' : 'Number'}</option>
-                <option value="currency">${isKu ? 'دراو ($)' : isAr ? 'عملة ($)' : 'Currency ($)'}</option>
-                <option value="date">${isKu ? 'هەڵبژاردنی بەروار' : isAr ? 'محدد تاريخ' : 'Date Picker'}</option>
-                <option value="select">${isKu ? 'لیستی هەڵبژاردن' : isAr ? 'قائمة منسدلة' : 'Dropdown / Select'}</option>
-                <option value="textarea">${isKu ? 'دەقی درێژ (چەند دێرێک)' : isAr ? 'منطقة نص (متعدد الأسطر)' : 'Text Area (multi-line)'}</option>
-                <option value="phone">${isKu ? 'ژمارەی تەلەفۆن' : isAr ? 'رقم الهاتف' : 'Phone Number'}</option>
-                <option value="email">${isKu ? 'ئیمەیڵ' : isAr ? 'البريد الإلكتروني' : 'Email Address'}</option>
-                <option value="toggle">${isKu ? 'دوگمەی بەڵێ / نەخێر' : isAr ? 'مفتاح نعم / لا' : 'Yes / No Toggle'}</option>
-            `;
-        }
-
-        const feReq = document.getElementById('fe-required');
-        if (feReq) {
-            feReq.innerHTML = `
-                <option value="false">${isKu ? 'ئارەزوومەندانە (Optional)' : isAr ? 'إختياري (Optional)' : 'Optional'}</option>
-                <option value="true">${isKu ? 'داواکراوە (Required)' : isAr ? 'مطلوب (Required)' : 'Required'}</option>
-            `;
-        }
-
-        const cancelBtn = document.querySelector('#field-editor-modal button[onclick="closeFieldEditor()"]');
-        const saveBtn = document.querySelector('#field-editor-modal button[onclick="saveFieldEditor()"]');
-        if (cancelBtn) cancelBtn.innerText = isKu ? 'پاشگەزبوونەوە' : isAr ? 'إلغاء' : 'Cancel';
-        if (saveBtn) saveBtn.innerText = isKu ? 'پاراستنی خانە' : isAr ? 'حفظ الحقل' : 'Save Field';
-
-        document.getElementById('fe-label').value = f ? f.label : '';
-        document.getElementById('fe-type').value = f ? f.type : 'text';
-        document.getElementById('fe-required').value = f ? String(f.required) : 'false';
-        document.getElementById('fe-placeholder').value = f ? (f.placeholder||'') : '';
-        document.getElementById('fe-options').value = f && f.options ? f.options.join('\n') : '';
-        toggleFieldTypeOptions();
-
-        const modal = document.getElementById('field-editor-modal');
-        modal.classList.add('modal-overlay-enter');
-    }
-
-    function closeFieldEditor() {
-        document.getElementById('field-editor-modal').classList.remove('modal-overlay-enter');
-    }
-
-    function toggleFieldTypeOptions() {
-        const type = document.getElementById('fe-type').value;
-        document.getElementById('fe-options-block').classList.toggle('hidden', type !== 'select');
-    }
-
-    function saveFieldEditor() {
-        const label = document.getElementById('fe-label').value.trim();
-        if (!label) { showActionToast('Field label is required', 'warn'); return; }
-
-        const fieldIndex = parseInt(document.getElementById('fe-editing-index').value);
-        const type       = document.getElementById('fe-type').value;
-        const required   = document.getElementById('fe-required').value === 'true';
-        const placeholder = document.getElementById('fe-placeholder').value.trim();
-        const optionsRaw = document.getElementById('fe-options').value.trim();
-        const options    = type === 'select' ? optionsRaw.split('\n').map(o=>o.trim()).filter(Boolean) : [];
-        const key        = label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-
-        if (!panelConfigs[_designerPanel]) panelConfigs[_designerPanel] = [];
-        const field = { label, key, type, placeholder, required, options };
-
-        if (fieldIndex >= 0) {
-            panelConfigs[_designerPanel][fieldIndex] = field;
-        } else {
-            panelConfigs[_designerPanel].push(field);
-        }
-
-        savePanelConfigs();
-        closeFieldEditor();
-        renderCurrentView();
-        showActionToast(fieldIndex >= 0 ? 'Field updated' : 'Field added', 'success');
-    }
-
-    function deleteFieldFromConfig(panelKey, idx) {
-        if (!panelConfigs[panelKey]) return;
-        panelConfigs[panelKey].splice(idx, 1);
-        savePanelConfigs();
-        renderCurrentView();
-        showActionToast('Field removed', 'delete');
-    }
-
-    function clearAllFields(panelKey) {
-        panelConfigs[panelKey] = [];
-        savePanelConfigs();
-        renderCurrentView();
-        showActionToast('All fields cleared', 'warn');
-    }
-
-    function moveFieldUp(panelKey, idx) {
-        if (!panelConfigs[panelKey] || idx === 0) return;
-        const arr = panelConfigs[panelKey];
-        [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
-        savePanelConfigs();
-        renderCurrentView();
-    }
-
-    function moveFieldDown(panelKey, idx) {
-        const arr = panelConfigs[panelKey];
-        if (!arr || idx >= arr.length - 1) return;
-        [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]];
-        savePanelConfigs();
-        renderCurrentView();
-    }
-
-    function addPresetField(panelKey, preset) {
-        if (!panelConfigs[panelKey]) panelConfigs[panelKey] = [];
-        const key = preset.label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-        // avoid duplicate key
-        if (panelConfigs[panelKey].find(f => f.key === key)) {
-            showActionToast(`Field "${preset.label}" already exists`, 'warn');
-            return;
-        }
-        panelConfigs[panelKey].push({ label:preset.label, key, type:preset.type, placeholder:preset.placeholder||'', required:false, options:preset.options||[] });
-        savePanelConfigs();
-        renderCurrentView();
-        showActionToast(`Added "${preset.label}" field`, 'success');
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            setTheme(currentTheme || 'sapphire');
-            setLanguage(currentLanguage || 'en');
-            renderCurrentView();
-        } catch (err) {
-            console.warn('Auto-recovered initial render:', err);
-            renderCurrentView();
-        }
-    });
-</script>
-
+<!-- ========================================================================= -->
+<!-- MASTER UNIFIED APPLICATION LOGIC                                          -->
+<!-- ========================================================================= -->
 <script>
 // ============================================================
 // NASHVILLE REAL ESTATE ERP 2026 — MASTER UNIFIED CONTROLLER
