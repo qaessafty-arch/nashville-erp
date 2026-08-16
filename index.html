@@ -228,7 +228,7 @@
 
             <div class="flex items-center space-x-3 rtl:space-x-reverse">
                 <!-- Quick Logo & Branding Button -->
-                <button onclick="openLogoManagerModal()" class="flex items-center space-x-1 rtl:space-x-reverse bg-[#0d1017] hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded-lg text-zinc-300 hover:text-white transition-all text-[11px] active:scale-95" title="Change Corporate Logo">
+                <button onclick="triggerDirectLogoUpload()" class="flex items-center space-x-1 rtl:space-x-reverse bg-[#0d1017] hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded-lg text-zinc-300 hover:text-white transition-all text-[11px] active:scale-95" title="Change Corporate Logo">
                     <i class="ph-bold ph-image text-blue-400"></i>
                     <span class="hidden sm:inline">Logo</span>
                 </button>
@@ -2168,6 +2168,14 @@ function showActionToast(message, type = 'info') {
 }
 
 // 12. Logo Management
+
+function triggerDirectLogoUpload() {
+    const fileInput = document.getElementById('direct-logo-file-input');
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
 function openLogoManagerModal() {
     _pendingLogoData = currentCustomLogo || '';
     const previewImg = document.getElementById('preview-custom-img');
