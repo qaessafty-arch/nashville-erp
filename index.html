@@ -2143,7 +2143,7 @@ const i18nDict = {
         nav_user_role: "Co-Owner & Admin",
         sidebar_title: "SECTIONS",
         sidebar_sections: "OPERATIONAL PANELS",
-        btn_add_record: "+ Add Record",
+        btn_add_record: "+ Add Record", btn_edit_record: "Edit Entry Record",
         btn_export_excel: "Export Excel",
         btn_print_table: "Print Table",
         btn_save: "Save Record",
@@ -2240,7 +2240,7 @@ const i18nDict = {
         nav_user_role: "مالك وإداري عام",
         sidebar_title: "الأقسام",
         sidebar_sections: "أقسام العمليات والتطبيقات",
-        btn_add_record: "+ إضافة قيد جديد",
+        btn_add_record: "+ إضافة قيد جديد", btn_edit_record: "تعديل بيانات القيد",
         btn_export_excel: "تصدير إكسل",
         btn_print_table: "طباعة الجدول",
         btn_save: "حفظ البيانات",
@@ -2337,7 +2337,7 @@ const i18nDict = {
         nav_user_role: "هاوبەش و بەڕێوەبەری سەرەکی",
         sidebar_title: "بەشەکان",
         sidebar_sections: "بەشەکانی بەڕێوەبردن",
-        btn_add_record: "+ زیادکردنی تۆماری نوێ",
+        btn_add_record: "+ زیادکردنی تۆماری نوێ", btn_edit_record: "دەستکاریکردنی تۆمار",
         btn_export_excel: "داگرتنی ئێکسڵ",
         btn_print_table: "چاپکردنی خشتە",
         btn_save: "تۆمارکردن",
@@ -2821,25 +2821,41 @@ function wipeDatabaseWithConfirmation() {
 function openDynModal(panelKey, editId) {
     const config = getPanelConfig(panelKey);
     const form = document.getElementById('dyn-entry-form');
+    if (!form) return;
     form.setAttribute('data-panel', panelKey);
     document.getElementById('dyn-edit-id').value = editId || '';
-    document.getElementById('dyn-modal-title').innerText = editId ? 'Edit Entry' : '+ Add Record';
+    
+    const dict = i18nDict[currentLanguage] || i18nDict['en'];
+    const titleEl = document.getElementById('dyn-modal-title');
+    if (titleEl) {
+        titleEl.innerText = editId ? (dict.btn_edit_record || 'Edit Record') : (dict.btn_add_record || '+ Add Record');
+    }
 
     const records = getPanelRecords(panelKey);
     const existing = editId ? records.find(r => r._id === editId) : null;
 
     const fieldsContainer = document.getElementById('dyn-form-fields');
-    fieldsContainer.innerHTML = config.map(f => {
-        const val = existing ? (existing[f.key] || '') : '';
-        if (f.type === 'select') {
-            const opts = (f.options || '').split(',').map(o => o.trim()).filter(Boolean);
-            const optHtml = opts.map(o => '<option value="' + o + '" ' + (val === o ? 'selected' : '') + '>' + o + '</option>').join('');
-            return '<div class="space-y-1"><label class="block text-xs font-semibold text-zinc-300">' + getLocalizedFieldLabel(f.label) + '</label><select name="' + f.key + '" ' + (f.required ? 'required' : '') + ' class="w-full bg-[#161a28] border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">' + optHtml + '</select></div>';
-        }
-        return '<div class="space-y-1"><label class="block text-xs font-semibold text-zinc-300">' + getLocalizedFieldLabel(f.label) + '</label><input type="' + (f.type || 'text') + '" name="' + f.key + '" value="' + val + '" placeholder="' + (f.placeholder || '') + '" ' + (f.required ? 'required' : '') + ' class="w-full bg-[#161a28] border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"></div>';
-    }).join('');
+    if (fieldsContainer) {
+        fieldsContainer.innerHTML = config.map(f => {
+            const val = existing ? (existing[f.key] || '') : '';
+            const fieldLabel = getLocalizedFieldLabel(f.label);
+            if (f.type === 'select') {
+                const opts = (f.options || '').split(',').map(o => o.trim()).filter(Boolean);
+                const optHtml = opts.map(o => {
+                    const localizedOpt = getLocalizedFieldLabel(o);
+                    return '<option value="' + o + '" ' + (val === o ? 'selected' : '') + '>' + localizedOpt + '</option>';
+                }).join('');
+                return '<div class="space-y-1"><label class="block text-xs font-semibold text-zinc-300">' + fieldLabel + '</label><select name="' + f.key + '" ' + (f.required ? 'required' : '') + ' class="w-full bg-[#161a28] border border-zinc-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">' + optHtml + '</select></div>';
+            }
+            return '<div class="space-y-1"><label class="block text-xs font-semibold text-zinc-300">' + fieldLabel + '</label><input type="' + (f.type || 'text') + '" name="' + f.key + '" value="' + val + '" placeholder="' + (f.placeholder || '') + '" ' + (f.required ? 'required' : '') + ' class="w-full bg-[#161a28] border border-zinc-700 rounded-xl p-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"></div>';
+        }).join('');
+    }
 
-    document.getElementById('dyn-entry-modal').classList.add('modal-overlay-enter');
+    const modal = document.getElementById('dyn-entry-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 }
 
 function closeDynModal() {
@@ -2956,6 +2972,22 @@ function getLocalizedFieldLabel(label) {
 
     const map = {
         // Contracts & Buy/Sell/Rent
+        'Property Code': { ku: 'کۆدی مڵک', ar: 'رمز العقار' },
+        'Property Name': { ku: 'ناوی مڵک', ar: 'اسم العقار' },
+        'Rental Duration (Months)': { ku: 'ماوەی کرێ (مانگ)', ar: 'مدة الإيجار (أشهر)' },
+        'Down Payment ($)': { ku: 'پێشەکی ($)', ar: 'المقدم ($)' },
+        'Remaining Balance ($)': { ku: 'ماوەی پارە ($)', ar: 'المبلغ المتبقي ($)' },
+        'Lease Start Date': { ku: 'دەستپێکی گرێبەست', ar: 'تاريخ بداية العقد' },
+        'Lease End Date': { ku: 'کۆتایی گرێبەست', ar: 'تاريخ نهاية العقد' },
+        'Payment Method': { ku: 'شێوازی پارەدان', ar: 'طريقة الدفع' },
+        'Plumbing, Electrical, HVAC': { ku: 'سەباکە، کارهەبا، ساردکەرەوە', ar: 'سباكة، كهرباء، تكييف' },
+        'Contractor Name': { ku: 'ناوی وەستا/کۆمپانیا', ar: 'اسم المقاول' },
+        'Estimated Cost ($)': { ku: 'تێچووی خەمڵێنراو ($)', ar: 'التكلفة التقديرية ($)' },
+        'Meter Number': { ku: 'ژمارەی پێوەر', ar: 'رقم العداد' },
+        'Previous Reading': { ku: 'خوێندنەوەی پێشوو', ar: 'القراءة السابقة' },
+        'Current Reading': { ku: 'خوێندنەوەی نوێ', ar: 'القراءة الحالية' },
+        'Department': { ku: 'بەش', ar: 'القسم' },
+        'Hire Date': { ku: 'بەرواری دامەزراندن', ar: 'تاريخ التعيين' },
         'Contract Number': { ku: 'ژمارەی گرێبەست', ar: 'رقم العقد' },
         'Contract No.': { ku: 'ژمارەی گرێبەست', ar: 'رقم العقد' },
         'Buyer Name': { ku: 'ناوی کڕیار', ar: 'اسم المشتري' },
