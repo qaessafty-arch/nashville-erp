@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en" class="dark" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -313,19 +312,11 @@
                 color: black !important;
             }
         }
-    
-        html, body {
-            height: 100vh !important;
-            max-height: 100vh !important;
-            overflow: hidden !important;
-        }
-        #sidebar-nav, #main-content-view, .main-scrollbar {
-            overscroll-behavior: contain !important;
-        }
     </style>
 </head>
-<body class="bg-[#06070b] text-zinc-100 font-sans antialiased h-screen max-h-screen flex flex-col overflow-hidden selection:bg-blue-600 selection:text-white relative">
-<!-- ========================================================================= -->
+<body class="bg-[#06070b] text-zinc-100 font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-blue-600 selection:text-white relative">
+
+    <!-- ========================================================================= -->
     <!-- ACTION TOAST NOTIFICATION CONTAINER                                       -->
     <!-- ========================================================================= -->
     <div id="toast-container" class="fixed bottom-5 right-5 rtl:right-auto rtl:left-5 z-50 pointer-events-none flex flex-col space-y-2"></div>
@@ -1445,11 +1436,392 @@ Option 3" class="w-full bg-[#0b0e16] border border-zinc-800 rounded-lg px-3 py-2
                 </div>
             </div>
         </div>
-    </div
+    </div>
 
-<!-- ========================================================================= -->
-<!-- MASTER UNIFIED APPLICATION LOGIC                                          -->
-<!-- ========================================================================= -->
+    
+            
+        `);
+        printWin.document.close();
+    }
+
+    function printSingleContract(panelKey, recId) {
+        const records = getPanelRecords(panelKey);
+        const rec = records.find(r => r._id === recId) || records[0];
+        if (!rec) { showActionToast('Contract record not found', 'warn'); return; }
+
+        const config = getPanelConfig(panelKey);
+        const title = (sidebarPanelNames[panelKey] && sidebarPanelNames[panelKey][currentLanguage])
+            ? sidebarPanelNames[panelKey][currentLanguage]
+            : 'OFFICIAL REAL ESTATE CONTRACT';
+
+        const logoImg = currentCustomLogo ? `<img src="${currentCustomLogo}" style="max-height:80px;">` : `<div style="font-size:26px; font-weight:bold; color:#1e40af;">NASHVILLE HOUSE REAL ESTATE</div>`;
+
+        const detailsHTML = config.map(f => {
+            return `
+                <div style="display:flex; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e2e8f0; font-size:13px;">
+                    <strong style="color:#475569;">${getLocalizedFieldLabel(f.label)}:</strong>
+                    <span style="color:#0f172a; font-weight:bold;">${rec[f.key] || '—'}</span>
+                </div>
+            `;
+        }).join('');
+
+        const watermarkHTML = currentCustomLogo ? `<div style="position:fixed; top:35%; left:25%; opacity:0.04; transform:rotate(-25deg); pointer-events:none; z-index:-1;"><img src="${currentCustomLogo}" style="width:450px;"></div>` : '';
+
+        const printWin = window.open('', '_blank', 'width=950,height=850');
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html dir="${currentLanguage === 'ar' || currentLanguage === 'ku' ? 'rtl' : 'ltr'}">
+            <head>
+                <title>${title} - ${rec._id || 'Legal Stationary'}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #0f172a; line-height: 1.6; }
+                    .contract-card { border: 2px solid #1e3a8a; padding: 30px; border-radius: 12px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; }
+                    .contract-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 25px; }
+                    .section-title { font-size: 14px; font-weight: bold; background: #f1f5f9; padding: 8px 12px; border-left: 4px solid #2563eb; margin-top: 20px; margin-bottom: 10px; border-radius: 4px; }
+                    .legal-clauses { font-size: 11px; color: #475569; margin-top: 25px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; }
+                    .signatures { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 1px solid #cbd5e1; text-align: center; }
+                    .sig-block { width: 30%; font-size: 12px; }
+                    .sig-line { margin-top: 50px; border-bottom: 1px solid #000; display: block; }
+                </style>
+            </head>
+            <body>
+                ${watermarkHTML}
+                <div class="contract-card">
+                    <div class="contract-header">
+                        <div>
+                            ${logoImg}
+                            <h2 style="margin:8px 0 0 0; color:#1e3a8a; letter-spacing:0.5px;">${title.toUpperCase()}</h2>
+                            <span style="font-size:11px; color:#64748b; font-family:monospace;">NOTARY VERIFIED CONTRACT REF: #${rec._id || 'CT-99081'}</span>
+                        </div>
+                        <div style="text-align:right; font-size:12px;">
+                            <strong>Erbil Corporate Real Estate Office</strong><br>
+                            Date Executed: <strong>${rec._createdAt || new Date().toLocaleDateString()}</strong><br>
+                            Status: <span style="color:#059669; font-weight:bold;">EXECUTED & VERIFIED</span>
+                        </div>
+                    </div>
+
+                    <div class="section-title">CONTRACTUAL SPECIFICATIONS & CLAUSES</div>
+                    <div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#fafafa;">
+                        ${detailsHTML}
+                    </div>
+
+                    <div class="legal-clauses">
+                        <strong>Erbil Notary Public Legal Terms & Declarations:</strong>
+                        <p style="margin:5px 0 0 0;">This contract serves as an official legal document binding the First Party and Second Party under Erbil Real Estate Regulations. All financial transactions, property transfers, and lease obligations specified herein are legally binding and enforceable by local jurisdiction.</p>
+                    </div>
+
+                    <div class="signatures">
+                        <div class="sig-block">
+                            <strong>First Party (Landlord / Seller)</strong>
+                            <span class="sig-line"></span>
+                            <span style="font-size:10px; color:#64748b;">Signature & Thumbprint</span>
+                        </div>
+                        <div class="sig-block">
+                            <strong>Second Party (Buyer / Tenant)</strong>
+                            <span class="sig-line"></span>
+                            <span style="font-size:10px; color:#64748b;">Signature & Thumbprint</span>
+                        </div>
+                        <div class="sig-block">
+                            <strong>Corporate Agency Seal</strong>
+                            <div style="border:2px dashed #3b82f6; height:60px; margin-top:20px; border-radius:8px; line-height:60px; color:#3b82f6; font-weight:bold;">NASHVILLE SEAL</div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+        `);
+        printWin.document.close();
+    }
+
+    // ============================================================
+    // PANEL FORM DESIGNER — Render
+    // ============================================================
+    function renderPanelFormDesigner(container) {
+        const isKu = currentLanguage === 'ku';
+        const isAr = currentLanguage === 'ar';
+
+        const panelOptions = Object.entries(sidebarPanelNames)
+            .map(([k, v]) => `<option value="${k}" ${k === _designerPanel ? 'selected' : ''}>${v[currentLanguage] || v['en'] || k}</option>`)
+            .join('');
+
+        const config = _designerPanel ? getPanelConfig(_designerPanel) : [];
+
+        const titleText = isKu ? 'دیزاینەری فۆڕمی بەشەکان' : isAr ? 'مصمم نماذج الأقسام' : 'Panel Form Designer';
+        const subTitleText = isKu ? 'هەر بەشێک هەڵبژێرە و فۆڕمەکەی دیزاین بکە — خانەکان، جۆرەکان، ناو و ڕوونكردنەوە دیاری بکە.' : isAr ? 'اختر أي قسم وصمم نموذجه — أضف حقولاً، حدد أنواعها، عناوينها، والنصوص الإرشادية.' : 'Choose any panel and design its form — add fields, set types, labels, placeholders, and required state.';
+        const step1Text = isKu ? '١. بەشێک هەڵبژێرە بۆ دیزاین' : isAr ? '١. اختر القسم للتصميم' : '1. Select a Panel to Design';
+        const step2Text = isKu ? '٢. بەڕێوەبردنی خانەکان' : isAr ? '٢. إدارة الحقول' : '2. Manage Fields';
+        const step3Text = isKu ? '٣. خانەی ئامادەکراوی خێرا' : isAr ? '٣. نماذج حقول جاهزة' : '3. Quick Field Presets';
+        const goToPanelText = isKu ? 'چوون بۆ بەش' : isAr ? 'الانتقال للقسم' : 'Go to Panel';
+        const addFieldText = isKu ? '+ زیادکردنی خانە' : isAr ? '+ إضافة حقل' : '+ Add Field';
+        const clearAllText = isKu ? 'سڕینەوەی هەمووی' : isAr ? 'مسح الكل' : 'Clear All';
+
+        const fieldRows = config.length === 0
+            ? `<div class="text-center py-8 text-zinc-500 text-xs">
+                <i class="ph ph-stack text-3xl text-zinc-700 block mb-2"></i>
+                ${isKu ? 'هیچ خانەیەک نییە. کلیک لەسەر + زیادکردنی خانە بکە.' : isAr ? 'لا توجد حقول بعد. اضغط على + إضافة حقل للبدء.' : 'No fields yet. Click <strong class="text-blue-400">+ Add Field</strong> to start.'}
+               </div>`
+            : config.map((f, i) => {
+                const typeColors = {
+                    text:'text-blue-400 bg-blue-400/10', number:'text-emerald-400 bg-emerald-400/10',
+                    currency:'text-yellow-400 bg-yellow-400/10', date:'text-purple-400 bg-purple-400/10',
+                    select:'text-orange-400 bg-orange-400/10', textarea:'text-cyan-400 bg-cyan-400/10',
+                    phone:'text-pink-400 bg-pink-400/10', email:'text-rose-400 bg-rose-400/10',
+                    toggle:'text-teal-400 bg-teal-400/10'
+                };
+                const tc = typeColors[f.type] || 'text-zinc-400 bg-zinc-400/10';
+                return `<div class="flex items-center justify-between bg-[#0b0e16] border border-zinc-800/80 px-4 py-3 rounded-xl group">
+                    <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                        <span class="w-5 h-5 flex items-center justify-center text-zinc-500 text-xs font-mono">${i+1}</span>
+                        <div>
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                <span class="text-sm font-semibold text-white">${f.label}</span>
+                                ${f.required === true || f.required === 'true' ? `<span class="text-rose-400 text-[10px] font-bold">${isKu ? 'داواکراوە' : isAr ? 'مطلوب' : 'Required'}</span>` : `<span class="text-zinc-600 text-[10px]">${isKu ? 'ئارەزوومەندانه' : isAr ? 'اختياري' : 'Optional'}</span>`}
+                            </div>
+                            <div class="flex items-center space-x-2 rtl:space-x-reverse mt-0.5">
+                                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${tc}">${f.type}</span>
+                                ${f.placeholder ? `<span class="text-[10px] text-zinc-600 truncate max-w-[180px]">&quot;${f.placeholder}&quot;</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1 rtl:space-x-reverse opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="moveFieldUp('${_designerPanel}',${i})" class="text-zinc-500 hover:text-white p-1 rounded transition-all" title="Move Up"><i class="ph ph-arrow-up text-sm"></i></button>
+                        <button onclick="moveFieldDown('${_designerPanel}',${i})" class="text-zinc-500 hover:text-white p-1 rounded transition-all" title="Move Down"><i class="ph ph-arrow-down text-sm"></i></button>
+                        <button onclick="openFieldEditor('${_designerPanel}',${i})" class="text-zinc-400 hover:text-blue-400 p-1 rounded transition-all" title="Edit Field"><i class="ph ph-pencil-simple text-sm"></i></button>
+                        <button onclick="deleteFieldFromConfig('${_designerPanel}',${i})" class="text-zinc-500 hover:text-rose-400 p-1 rounded transition-all" title="Delete Field"><i class="ph ph-trash text-sm"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+
+        container.innerHTML = `
+        <div class="space-y-6">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-white">${titleText}</h2>
+                    <p class="text-xs text-zinc-400 mt-1">${subTitleText}</p>
+                </div>
+                <span class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs font-bold px-3 py-1.5 rounded-xl shrink-0">Form Builder</span>
+            </div>
+
+            <!-- Step 1: Select Panel -->
+            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-3">
+                <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                    <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <h3 class="text-sm font-bold text-white">${step1Text}</h3>
+                </div>
+                <div class="flex items-center space-x-3 rtl:space-x-reverse gap-2 flex-wrap">
+                    <select id="designer-panel-select" onchange="designerSelectPanel(this.value)" class="flex-1 min-w-[200px] bg-[#0b0e16] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <option value="">${isKu ? '-- بەشێک هەڵبژێرە --' : isAr ? '-- اختر قسماً --' : '-- Select a panel --'}</option>
+                        ${panelOptions}
+                    </select>
+                    ${_designerPanel ? `<button onclick="switchPanel('${_designerPanel}')" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 rtl:space-x-reverse">
+                        <i class="ph ph-arrow-square-out text-sm"></i><span>${goToPanelText}</span>
+                    </button>` : ''}
+                </div>
+                ${_designerPanel ? `<div class="bg-blue-600/10 border border-blue-500/20 px-3 py-2 rounded-lg text-xs text-blue-300">${isKu ? 'دیزاینی فۆڕم بۆ: ' : isAr ? 'تصميم النموذج لقسم: ' : 'Designing form for: '}<strong>${sidebarPanelNames[_designerPanel]?.[currentLanguage] || _designerPanel}</strong> &mdash; ${config.length} ${isKu ? 'خانە' : isAr ? 'حقول' : 'field(s)'}</div>` : ''}
+            </div>
+
+            <!-- Step 2: Add / Manage Fields -->
+            ${_designerPanel ? `
+            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                        <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                        <h3 class="text-sm font-bold text-white">${step2Text}</h3>
+                    </div>
+                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                        ${config.length > 0 ? `<button onclick="clearAllFields('${_designerPanel}')" class="text-rose-400 hover:text-rose-300 text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-400/10 hover:bg-rose-400/20 transition-all">${clearAllText}</button>` : ''}
+                        <button onclick="openFieldEditor('${_designerPanel}',-1)" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center space-x-1.5 rtl:space-x-reverse">
+                            <i class="ph-bold ph-plus"></i><span>${addFieldText}</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-2">${fieldRows}</div>
+            </div>
+
+            <!-- Step 3: Quick Presets -->
+            <div class="bg-[#121622] border border-[#1c2233] p-5 rounded-2xl space-y-4">
+                <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                    <span class="w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">3</span>
+                    <h3 class="text-sm font-bold text-white">${step3Text}</h3>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    ${[
+                        {label: isKu ? 'ناوی سیانی' : isAr ? 'الاسم الكامل' : 'Full Name', type:'text', placeholder: isKu ? 'ناوی تەواو...' : isAr ? 'أدخل الاسم الكامل...' : 'Enter full name...'},
+                        {label: isKu ? 'ژمارەی تەلەفۆن' : isAr ? 'رقم الهاتف' : 'Phone Number', type:'phone', placeholder:'+964 750 000 0000'},
+                        {label: isKu ? 'ئیمەیڵ' : isAr ? 'البريد الإلكتروني' : 'Email', type:'email', placeholder:'user@email.com'},
+                        {label: isKu ? 'بەروار' : isAr ? 'التاريخ' : 'Date', type:'date', placeholder:''},
+                        {label: isKu ? 'بڕ ($)' : isAr ? 'المبلغ ($)' : 'Amount ($)', type:'currency', placeholder:'0.00'},
+                        {label: isKu ? 'بڕ (دینار)' : isAr ? 'المبلغ (دينار)' : 'Amount (IQD)', type:'number', placeholder:'0'},
+                        {label: isKu ? 'تێبینی' : isAr ? 'ملاحظات' : 'Notes', type:'textarea', placeholder: isKu ? 'تێبینی زیاتر...' : isAr ? 'ملاحظات إضافية...' : 'Additional notes...'},
+                        {label: isKu ? 'دۆخ' : isAr ? 'الحالة' : 'Status', type:'select', placeholder:'', options:['Active','Pending','Closed','Cancelled']},
+                        {label: isKu ? 'ناونیشان' : isAr ? 'العنوان' : 'Address', type:'text', placeholder: isKu ? 'شار، گەڕەک...' : isAr ? 'الشارع، المدينة...' : 'Street, City...'},
+                        {label: isKu ? 'ژمارەی ناسنامە' : isAr ? 'رقم الهوية' : 'National ID', type:'text', placeholder:'ID number'},
+                        {label: isKu ? 'بەرواری دەستپێک' : isAr ? 'تاريخ البدء' : 'Start Date', type:'date', placeholder:''},
+                        {label: isKu ? 'بەرواری کۆتایی' : isAr ? 'تاريخ الانتهاء' : 'End Date', type:'date', placeholder:''},
+                        {label: isKu ? 'پەسەندکراوە' : isAr ? 'موافق عليه' : 'Approved', type:'toggle', placeholder:''},
+                        {label: isKu ? 'ژمارەی گرێبەست' : isAr ? 'رقم العقد' : 'Contract No.', type:'text', placeholder:'CTR-0001'},
+                        {label: isKu ? 'ژمارەی یەکە' : isAr ? 'رقم الوحدة' : 'Property Unit', type:'text', placeholder:'Unit / Apt number'},
+                        {label: isKu ? 'وەسف / ڕوونكردنەوە' : isAr ? 'الوصف' : 'Description', type:'textarea', placeholder: isKu ? 'وردەکاری...' : isAr ? 'التفاصيل...' : 'Details...'},
+                    ].map(p => `<button onclick="addPresetField('${_designerPanel}',${JSON.stringify(p).replace(/'/g,"\\'")})" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 rtl:space-x-reverse">
+                        <i class="ph ph-plus-circle text-blue-400"></i><span>${p.label}</span></button>`).join('')}
+                </div>
+            </div>` : `<div class="bg-[#121622] border border-[#1c2233] p-8 rounded-2xl text-center space-y-3">
+                <i class="ph ph-sliders text-4xl text-zinc-600 block"></i>
+                <p class="text-zinc-400 text-sm font-semibold">${isKu ? 'بەشێک لەسەرەوە هەڵبژێرە بۆ دەستپێکردنی دیزاین' : isAr ? 'اختر قسماً من الأعلى للبدء بالتصميم' : 'Select a panel above to start designing its form'}</p>
+            </div>`}
+        </div>`;
+    }
+
+    function designerSelectPanel(val) {
+        _designerPanel = val || null;
+        renderCurrentView();
+    }
+
+    function openFieldEditor(panelKey, fieldIndex) {
+        _designerPanel = panelKey;
+        const isKu = currentLanguage === 'ku';
+        const isAr = currentLanguage === 'ar';
+        const config = getPanelConfig(panelKey);
+        const f = fieldIndex >= 0 ? config[fieldIndex] : null;
+
+        document.getElementById('fe-editing-index').value = fieldIndex;
+        document.getElementById('field-editor-title').innerText = f 
+            ? (isKu ? 'دەستکاریکردنی خانە' : isAr ? 'تعديل الحقل' : 'Edit Field')
+            : (isKu ? '+ زیادکردنی خانەی نوێ' : isAr ? '+ إضافة حقل جديد' : 'Add New Field');
+
+        // Translate field type options
+        const feType = document.getElementById('fe-type');
+        if (feType) {
+            feType.innerHTML = `
+                <option value="text">${isKu ? 'دەق (یەک دێر)' : isAr ? 'نص (سطر واحد)' : 'Text (single line)'}</option>
+                <option value="number">${isKu ? 'ژمارە' : isAr ? 'رقم' : 'Number'}</option>
+                <option value="currency">${isKu ? 'دراو ($)' : isAr ? 'عملة ($)' : 'Currency ($)'}</option>
+                <option value="date">${isKu ? 'هەڵبژاردنی بەروار' : isAr ? 'محدد تاريخ' : 'Date Picker'}</option>
+                <option value="select">${isKu ? 'لیستی هەڵبژاردن' : isAr ? 'قائمة منسدلة' : 'Dropdown / Select'}</option>
+                <option value="textarea">${isKu ? 'دەقی درێژ (چەند دێرێک)' : isAr ? 'منطقة نص (متعدد الأسطر)' : 'Text Area (multi-line)'}</option>
+                <option value="phone">${isKu ? 'ژمارەی تەلەفۆن' : isAr ? 'رقم الهاتف' : 'Phone Number'}</option>
+                <option value="email">${isKu ? 'ئیمەیڵ' : isAr ? 'البريد الإلكتروني' : 'Email Address'}</option>
+                <option value="toggle">${isKu ? 'دوگمەی بەڵێ / نەخێر' : isAr ? 'مفتاح نعم / لا' : 'Yes / No Toggle'}</option>
+            `;
+        }
+
+        const feReq = document.getElementById('fe-required');
+        if (feReq) {
+            feReq.innerHTML = `
+                <option value="false">${isKu ? 'ئارەزوومەندانە (Optional)' : isAr ? 'إختياري (Optional)' : 'Optional'}</option>
+                <option value="true">${isKu ? 'داواکراوە (Required)' : isAr ? 'مطلوب (Required)' : 'Required'}</option>
+            `;
+        }
+
+        const cancelBtn = document.querySelector('#field-editor-modal button[onclick="closeFieldEditor()"]');
+        const saveBtn = document.querySelector('#field-editor-modal button[onclick="saveFieldEditor()"]');
+        if (cancelBtn) cancelBtn.innerText = isKu ? 'پاشگەزبوونەوە' : isAr ? 'إلغاء' : 'Cancel';
+        if (saveBtn) saveBtn.innerText = isKu ? 'پاراستنی خانە' : isAr ? 'حفظ الحقل' : 'Save Field';
+
+        document.getElementById('fe-label').value = f ? f.label : '';
+        document.getElementById('fe-type').value = f ? f.type : 'text';
+        document.getElementById('fe-required').value = f ? String(f.required) : 'false';
+        document.getElementById('fe-placeholder').value = f ? (f.placeholder||'') : '';
+        document.getElementById('fe-options').value = f && f.options ? f.options.join('\n') : '';
+        toggleFieldTypeOptions();
+
+        const modal = document.getElementById('field-editor-modal');
+        modal.classList.add('modal-overlay-enter');
+    }
+
+    function closeFieldEditor() {
+        document.getElementById('field-editor-modal').classList.remove('modal-overlay-enter');
+    }
+
+    function toggleFieldTypeOptions() {
+        const type = document.getElementById('fe-type').value;
+        document.getElementById('fe-options-block').classList.toggle('hidden', type !== 'select');
+    }
+
+    function saveFieldEditor() {
+        const label = document.getElementById('fe-label').value.trim();
+        if (!label) { showActionToast('Field label is required', 'warn'); return; }
+
+        const fieldIndex = parseInt(document.getElementById('fe-editing-index').value);
+        const type       = document.getElementById('fe-type').value;
+        const required   = document.getElementById('fe-required').value === 'true';
+        const placeholder = document.getElementById('fe-placeholder').value.trim();
+        const optionsRaw = document.getElementById('fe-options').value.trim();
+        const options    = type === 'select' ? optionsRaw.split('\n').map(o=>o.trim()).filter(Boolean) : [];
+        const key        = label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+
+        if (!panelConfigs[_designerPanel]) panelConfigs[_designerPanel] = [];
+        const field = { label, key, type, placeholder, required, options };
+
+        if (fieldIndex >= 0) {
+            panelConfigs[_designerPanel][fieldIndex] = field;
+        } else {
+            panelConfigs[_designerPanel].push(field);
+        }
+
+        savePanelConfigs();
+        closeFieldEditor();
+        renderCurrentView();
+        showActionToast(fieldIndex >= 0 ? 'Field updated' : 'Field added', 'success');
+    }
+
+    function deleteFieldFromConfig(panelKey, idx) {
+        if (!panelConfigs[panelKey]) return;
+        panelConfigs[panelKey].splice(idx, 1);
+        savePanelConfigs();
+        renderCurrentView();
+        showActionToast('Field removed', 'delete');
+    }
+
+    function clearAllFields(panelKey) {
+        panelConfigs[panelKey] = [];
+        savePanelConfigs();
+        renderCurrentView();
+        showActionToast('All fields cleared', 'warn');
+    }
+
+    function moveFieldUp(panelKey, idx) {
+        if (!panelConfigs[panelKey] || idx === 0) return;
+        const arr = panelConfigs[panelKey];
+        [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+        savePanelConfigs();
+        renderCurrentView();
+    }
+
+    function moveFieldDown(panelKey, idx) {
+        const arr = panelConfigs[panelKey];
+        if (!arr || idx >= arr.length - 1) return;
+        [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]];
+        savePanelConfigs();
+        renderCurrentView();
+    }
+
+    function addPresetField(panelKey, preset) {
+        if (!panelConfigs[panelKey]) panelConfigs[panelKey] = [];
+        const key = preset.label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+        // avoid duplicate key
+        if (panelConfigs[panelKey].find(f => f.key === key)) {
+            showActionToast(`Field "${preset.label}" already exists`, 'warn');
+            return;
+        }
+        panelConfigs[panelKey].push({ label:preset.label, key, type:preset.type, placeholder:preset.placeholder||'', required:false, options:preset.options||[] });
+        savePanelConfigs();
+        renderCurrentView();
+        showActionToast(`Added "${preset.label}" field`, 'success');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            setTheme(currentTheme || 'sapphire');
+            setLanguage(currentLanguage || 'en');
+            renderCurrentView();
+        } catch (err) {
+            console.warn('Auto-recovered initial render:', err);
+            renderCurrentView();
+        }
+    });
+</script>
+
 <script>
 // ============================================================
 // NASHVILLE REAL ESTATE ERP 2026 — MASTER UNIFIED CONTROLLER
@@ -3118,6 +3490,7 @@ function filterPanelTable(query, tableId) {
 
 // 21. Master Routing & Panel Switching
 function switchPanel(panelKey) {
+    try { toggleMobileSidebar(false); } catch(e){}
     currentActivePanel = panelKey;
     try { localStorage.setItem(STORAGE_KEY_ACTIVE_PANEL, panelKey); } catch(e){}
 
@@ -3265,6 +3638,36 @@ window.addEventListener('DOMContentLoaded', () => {
         renderCurrentView();
     }
 });
+
+
+// ============================================================
+// MOBILE RESPONSIVE DRAWER CONTROLLER
+// ============================================================
+function toggleMobileSidebar(forceState) {
+    const sidebar = document.getElementById('sidebar-nav');
+    const backdrop = document.getElementById('mobile-sidebar-backdrop');
+    if (!sidebar) return;
+
+    const isRtl = document.documentElement.dir === 'rtl';
+    const hiddenClass = isRtl ? 'translate-x-full' : '-translate-x-full';
+    
+    let isCurrentlyOpen = !sidebar.classList.contains(hiddenClass);
+    if (forceState !== undefined) isCurrentlyOpen = !forceState;
+
+    if (isCurrentlyOpen) {
+        sidebar.classList.add(hiddenClass);
+        if (backdrop) {
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+        }
+    } else {
+        sidebar.classList.remove(hiddenClass);
+        if (backdrop) {
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100', 'pointer-events-auto');
+        }
+    }
+}
 
 </script>
 </body>
