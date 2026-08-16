@@ -2898,15 +2898,22 @@ function openFieldEditor(idx) {
     const isEdit = idx >= 0 && idx < curConfig.length;
     const field = isEdit ? curConfig[idx] : { label: '', key: '', type: 'text', placeholder: '', required: true, options: '' };
 
-    document.getElementById('field-editor-idx').value = idx;
-    document.getElementById('field-label').value = field.label;
-    document.getElementById('field-key').value = field.key;
-    document.getElementById('field-type').value = field.type || 'text';
-    document.getElementById('field-placeholder').value = field.placeholder || '';
-    document.getElementById('field-options').value = field.options || '';
-    document.getElementById('field-required').checked = !!field.required;
+    const idxEl = document.getElementById('fe-editing-index') || document.getElementById('field-editor-idx');
+    const labelEl = document.getElementById('fe-label') || document.getElementById('field-label');
+    const typeEl = document.getElementById('fe-type') || document.getElementById('field-type');
+    const placeholderEl = document.getElementById('fe-placeholder') || document.getElementById('field-placeholder');
+    const optionsEl = document.getElementById('fe-options') || document.getElementById('field-options');
+    const requiredEl = document.getElementById('fe-required') || document.getElementById('field-required');
 
-    document.getElementById('field-editor-modal').classList.add('modal-overlay-enter');
+    if (idxEl) idxEl.value = idx;
+    if (labelEl) labelEl.value = field.label;
+    if (typeEl) typeEl.value = field.type || 'text';
+    if (placeholderEl) placeholderEl.value = field.placeholder || '';
+    if (optionsEl) optionsEl.value = field.options || '';
+    if (requiredEl) requiredEl.checked = !!field.required;
+
+    const modal = document.getElementById('field-editor-modal');
+    if (modal) modal.classList.add('modal-overlay-enter');
 }
 
 function closeFieldEditor() {
@@ -2914,16 +2921,23 @@ function closeFieldEditor() {
 }
 
 function saveFieldEditor() {
-    const idx = parseInt(document.getElementById('field-editor-idx').value);
-    const label = document.getElementById('field-label').value.trim();
-    const key = document.getElementById('field-key').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const type = document.getElementById('field-type').value;
-    const placeholder = document.getElementById('field-placeholder').value.trim();
-    const options = document.getElementById('field-options').value.trim();
-    const required = document.getElementById('field-required').checked;
+    const idxEl = document.getElementById('fe-editing-index') || document.getElementById('field-editor-idx');
+    const labelEl = document.getElementById('fe-label') || document.getElementById('field-label');
+    const typeEl = document.getElementById('fe-type') || document.getElementById('field-type');
+    const placeholderEl = document.getElementById('fe-placeholder') || document.getElementById('field-placeholder');
+    const optionsEl = document.getElementById('fe-options') || document.getElementById('field-options');
+    const requiredEl = document.getElementById('fe-required') || document.getElementById('field-required');
 
-    if (!label || !key) {
-        showActionToast('Label and Key are required', 'warn');
+    const idx = parseInt(idxEl ? idxEl.value : -1);
+    const label = labelEl ? labelEl.value.trim() : '';
+    const type = typeEl ? typeEl.value : 'text';
+    const placeholder = placeholderEl ? placeholderEl.value.trim() : '';
+    const options = optionsEl ? optionsEl.value.trim() : '';
+    const required = requiredEl ? requiredEl.checked : true;
+    const key = label.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+    if (!label) {
+        showActionToast('Field Label is required', 'warn');
         return;
     }
 
@@ -3070,31 +3084,54 @@ function renderResidenceSupport(container) {
 }
 
 function openAddRecordModal() {
-    document.getElementById('modal-overlay').classList.add('modal-overlay-enter');
+    const editIdEl = document.getElementById('edit-record-id');
+    if (editIdEl) editIdEl.value = '';
+    const titleEl = document.getElementById('residence-modal-title');
+    if (titleEl) titleEl.innerText = 'Add Record';
+    const modal = document.getElementById('residence-modal-overlay');
+    if (modal) modal.classList.add('modal-overlay-enter');
 }
 function closeAddRecordModal() {
-    document.getElementById('modal-overlay').classList.remove('modal-overlay-enter');
+    const modal = document.getElementById('residence-modal-overlay');
+    if (modal) modal.classList.remove('modal-overlay-enter');
+}
+function closeResidenceModal() {
+    closeAddRecordModal();
 }
 
 function handleAddRecordSubmit(e) {
-    e.preventDefault();
-    const newRec = {
-        code: 'RES-' + Math.floor(1000 + Math.random() * 9000),
-        sendTo: document.getElementById('field-sendto')?.value || 'Asayish Directorate General',
-        tenant: document.getElementById('field-tenant')?.value || 'New Resident',
-        tenantOrigin: document.getElementById('field-origin')?.value || 'Erbil Resident',
-        owner: document.getElementById('field-owner')?.value || 'Kamal Barzani',
-        prevTenant: document.getElementById('field-prev-tenant')?.value || '—',
-        scans: 1,
-        status: 'Verified',
-        location: 'Empire World Complex',
-        phone: '+964 750 000 0000'
-    };
-    residenceRecords.unshift(newRec);
+    if (e && e.preventDefault) e.preventDefault();
+    const editId = document.getElementById('edit-record-id')?.value;
+    const sendTo = document.getElementById('residence-send-to')?.value || document.getElementById('field-sendto')?.value || 'Asayish Directorate General';
+    const tenant = document.getElementById('residence-tenant-name')?.value || document.getElementById('field-tenant')?.value || 'New Resident';
+    const tenantOrigin = document.getElementById('residence-tenant-origin')?.value || document.getElementById('field-origin')?.value || 'Erbil Resident';
+    const owner = document.getElementById('residence-owner-name')?.value || document.getElementById('field-owner')?.value || 'Kamal Barzani';
+    const prevTenant = document.getElementById('residence-prev-tenant')?.value || document.getElementById('field-prev-tenant')?.value || '—';
+    const location = document.getElementById('residence-location')?.value || 'Empire World Complex';
+    const phone = document.getElementById('residence-phone')?.value || '+964 750 000 0000';
+
+    if (editId) {
+        const idx = residenceRecords.findIndex(r => r.code === editId);
+        if (idx !== -1) {
+            residenceRecords[idx] = { ...residenceRecords[idx], sendTo, tenant, tenantOrigin, owner, prevTenant, location, phone };
+        }
+    } else {
+        const newRec = {
+            code: 'RES-' + Math.floor(1000 + Math.random() * 9000),
+            sendTo, tenant, tenantOrigin, owner, prevTenant,
+            scans: 1,
+            status: 'Verified',
+            location, phone
+        };
+        residenceRecords.unshift(newRec);
+    }
     saveResidenceRecords();
     closeAddRecordModal();
     renderCurrentView();
-    showActionToast('Residence clearance ' + newRec.code + ' registered', 'success');
+    showActionToast('Residence clearance record saved', 'success');
+}
+function handleSaveResidenceRecord(e) {
+    handleAddRecordSubmit(e);
 }
 
 function deleteResidenceRecord(code) {
