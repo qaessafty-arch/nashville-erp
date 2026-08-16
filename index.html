@@ -2214,24 +2214,95 @@ function closeLogoManagerModal() {
     if (modal) modal.classList.remove('modal-overlay-enter');
 }
 
+
 function handleLogoFileUpload(e) {
-    const file = e.target.files[0];
+    const file = e.target && e.target.files ? e.target.files[0] : null;
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(evt) {
-        _pendingLogoData = evt.target.result;
-        const previewImg = document.getElementById('preview-custom-img');
-        const previewIcon = document.getElementById('preview-fallback-icon');
-        if (previewImg && previewIcon) {
-            previewImg.src = _pendingLogoData;
-            previewImg.classList.remove('hidden');
-            previewIcon.classList.add('hidden');
-        }
-        const nameEl = document.getElementById('logo-file-name');
-        if (nameEl) nameEl.innerText = file.name;
+        const rawData = evt.target.result;
+        
+        // Resize and compress via HTML5 canvas to guarantee lightweight Base64 under localStorage quota
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL('image/png', 0.9);
+            
+            _pendingLogoData = compressedDataUrl;
+            currentCustomLogo = compressedDataUrl;
+
+            try {
+                localStorage.setItem(STORAGE_KEY_LOGO, currentCustomLogo);
+            } catch(err) {
+                console.warn('LocalStorage save failed:', err);
+            }
+
+            applyAppLogo(currentCustomLogo);
+            renderCurrentView();
+            showActionToast(
+                currentLanguage === 'ar' ? 'تم حفظ وتطبيق الشعار بنجاح!' :
+                currentLanguage === 'ku' ? 'لۆگۆ بەسەرکەوتوویی پاشەکەوت کرا!' :
+                'Corporate logo applied & saved successfully!', 
+                'success'
+            );
+        };
+        img.src = rawData;
     };
     reader.readAsDataURL(file);
 }
+
+function applyAppLogo(logoUrl) {
+    currentCustomLogo = logoUrl || '';
+    
+    // Update all img elements with logo classes or IDs
+    const logoSelectors = ['#header-custom-logo', '#login-custom-logo', '#sidebar-custom-logo', '#preview-custom-img', '.app-logo-img'];
+    const fallbackSelectors = ['#header-fallback-icon', '#login-fallback-icon', '#sidebar-fallback-icon', '#preview-fallback-icon', '.app-logo-fallback'];
+
+    logoSelectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(img => {
+            if (currentCustomLogo) {
+                img.src = currentCustomLogo;
+                img.classList.remove('hidden');
+            } else {
+                img.classList.add('hidden');
+            }
+        });
+    });
+
+    fallbackSelectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(icon => {
+            if (currentCustomLogo) {
+                icon.classList.add('hidden');
+            } else {
+                icon.classList.remove('hidden');
+            }
+        });
+    });
+}
+
 
 function applyLogoFromUrl() {
     const urlInput = document.getElementById('logo-url-input');
