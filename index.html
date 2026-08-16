@@ -105,216 +105,8 @@
             --text-main: #f4f4f5;
             --text-muted: #a1a1aa;
         }
-        /* WHITE / LIGHT THEME */
-        [data-theme="white"] {
-            --primary-accent: #2563eb;
-            --primary-badge: #3b82f6;
-            --bg-app: #f1f5f9;
-            --bg-header: #ffffff;
-            --bg-sidebar: #ffffff;
-            --bg-main: #ffffff;
-            --bg-card: #f8fafc;
-            --bg-card-inner: #f1f5f9;
-            --bg-input: #ffffff;
-            --border-main: #cbd5e1;
-            --text-main: #0f172a;
-            --text-muted: #475569;
-        }
-
-        /* Dynamic Theme Element Overrides */
-        body {
-            background-color: var(--bg-app) !important;
-            color: var(--text-main) !important;
-            transition: background-color 0.25s ease, color 0.25s ease;
-        }
-        header {
-            background-color: var(--bg-header) !important;
-            border-color: var(--border-main) !important;
-            color: var(--text-main) !important;
-        }
-        aside#sidebar-nav {
-            background-color: var(--bg-sidebar) !important;
-            border-color: var(--border-main) !important;
-        }
-        main#main-content-view {
-            background-color: var(--bg-main) !important;
-            border-color: var(--border-main) !important;
-        }
-
-        /* Universal Container Overrides */
-        [data-theme] .bg-\[\#121622\],
-        [data-theme] .bg-\[\#0d1017\],
-        [data-theme] .bg-\[\#131722\] {
-            background-color: var(--bg-card) !important;
-            border-color: var(--border-main) !important;
-        }
-        [data-theme] .bg-\[\#090b10\],
-        [data-theme] .bg-\[\#0b0e16\],
-        [data-theme] .bg-\[\#10131d\],
-        [data-theme] .bg-\[\#161a28\],
-        [data-theme] .bg-\[\#12151f\] {
-            background-color: var(--bg-card-inner) !important;
-            border-color: var(--border-main) !important;
-        }
-        [data-theme] input,
-        [data-theme] select,
-        [data-theme] textarea {
-            background-color: var(--bg-input) !important;
-            border-color: var(--border-main) !important;
-            color: var(--text-main) !important;
-        }
-
-        /* White Theme Specific Adjustments */
-        [data-theme="white"] .text-white,
-        [data-theme="white"] h1,
-        [data-theme="white"] h2,
-        [data-theme="white"] h3,
-        [data-theme="white"] h4,
-        [data-theme="white"] strong {
-            color: #0f172a !important;
-        }
-        [data-theme="white"] .text-zinc-400,
-        [data-theme="white"] .text-zinc-500,
-        [data-theme="white"] p {
-            color: #475569 !important;
-        }
-        [data-theme="white"] .border-zinc-800,
-        [data-theme="white"] .border-zinc-700,
-        [data-theme="white"] .border-\[\#1c2233\] {
-            border-color: #cbd5e1 !important;
-        }
-        [data-theme="white"] #residence-modal-card,
-        [data-theme="white"] #clearance-view-card,
-        [data-theme="white"] #logo-manager-modal .modal-card-anim,
-        [data-theme="white"] #dev-master-modal .modal-card-anim,
-        [data-theme="white"] #account-modal .modal-card-anim {
-            background-color: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            color: #0f172a !important;
-        }
-        [data-theme="white"] .nav-link:not(.bg-blue-600) {
-            color: #475569 !important;
-        }
-        [data-theme="white"] .nav-link:not(.bg-blue-600):hover {
-            background-color: #e2e8f0 !important;
-            color: #0f172a !important;
-        }
-        [data-theme="white"] tr:hover {
-            background-color: #e2e8f0 !important;
-        }
-
-        /* Scrollbar Base */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #090b10;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1f2638;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #333d59;
-        }
-
-        /* Sidebar Distinct Scrollbar */
-        .sidebar-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-scrollbar::-webkit-scrollbar-track {
-            background: #0b0e16;
-        }
-        .sidebar-scrollbar::-webkit-scrollbar-thumb {
-            background: #2563eb;
-            border-radius: 4px;
-        }
-        .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
-        }
-
-        /* Main Workspace Distinct Scrollbar */
-        .main-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .main-scrollbar::-webkit-scrollbar-track {
-            background: #090b10;
-        }
-        .main-scrollbar::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 6px;
-        }
-        .main-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
-        }
-
-        /* Action & View Transitions */
-        .view-transition {
-            animation: viewFadeSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes viewFadeSlide {
-            from {
-                opacity: 0;
-                transform: translateY(6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Modal Transitions */
-        .modal-overlay-enter {
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-        .modal-overlay-enter .modal-card-anim {
-            transform: scale(1) translateY(0) !important;
-            opacity: 1 !important;
-        }
-
-        /* Row Delete Animation */
-        .row-fade-out {
-            opacity: 0;
-            transform: translateX(30px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Toast Notification Animation */
-        .toast-enter {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-        }
-        .toast-exit {
-            transform: translateY(16px) scale(0.95);
-            opacity: 0;
-        }
-
-        [dir="rtl"] {
-            font-family: 'Tajawal', 'Noto Sans Arabic', sans-serif;
-        }
-
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #clearance-view-modal, #clearance-view-modal * {
-                visibility: visible;
-            }
-            #clearance-view-modal {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white !important;
-                color: black !important;
-            }
-        }
-    
         
-        /* Perfect Mathematical Independent Scroll Isolation */
+        /* Strict Independent Scroll Panes */
         *, *::before, *::after {
             box-sizing: border-box !important;
         }
@@ -327,8 +119,11 @@
             margin: 0 !important;
             padding: 0 !important;
         }
-        #sidebar-nav, #main-content-view, .main-scrollbar {
+        #sidebar-nav, #main-content-view {
             overscroll-behavior: contain !important;
+            overscroll-behavior-y: contain !important;
+            isolation: isolate !important;
+            touch-action: pan-y !important;
             -webkit-overflow-scrolling: touch !important;
         }
         #sidebar-nav {
@@ -337,6 +132,7 @@
             max-height: calc(100vh - 77px) !important;
             max-height: calc(100dvh - 77px) !important;
             overflow-y: auto !important;
+            overflow-x: hidden !important;
         }
         #main-content-view {
             height: calc(100vh - 77px) !important;
@@ -344,6 +140,7 @@
             max-height: calc(100vh - 77px) !important;
             max-height: calc(100dvh - 77px) !important;
             overflow-y: auto !important;
+            overflow-x: hidden !important;
         }
     </style>
 </head>
@@ -3765,6 +3562,47 @@ window.addEventListener('DOMContentLoaded', () => {
 // MOBILE RESPONSIVE DRAWER CONTROLLER
 // ============================================================
 
+
+
+// ============================================================
+// STRICT INDEPENDENT SCROLL ISOLATION CONTROLLER
+// ============================================================
+function setupStrictScrollIsolation() {
+    const sidebar = document.getElementById('sidebar-nav');
+    const mainView = document.getElementById('main-content-view');
+
+    function isolateScroll(el) {
+        if (!el) return;
+        el.addEventListener('wheel', function(e) {
+            const scrollTop = el.scrollTop;
+            const scrollHeight = el.scrollHeight;
+            const height = el.clientHeight;
+            const delta = e.deltaY;
+
+            // Prevent scroll bubbling to parent or other panels when reaching boundaries
+            if (delta < 0 && scrollTop <= 0) {
+                el.scrollTop = 0;
+                e.preventDefault();
+                e.stopPropagation();
+            } else if (delta > 0 && scrollTop + height >= scrollHeight - 1) {
+                el.scrollTop = scrollHeight - height;
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                e.stopPropagation();
+            }
+        }, { passive: false });
+    }
+
+    isolateScroll(sidebar);
+    isolateScroll(mainView);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupStrictScrollIsolation);
+} else {
+    setTimeout(setupStrictScrollIsolation, 100);
+}
 
 </script>
 </body>
