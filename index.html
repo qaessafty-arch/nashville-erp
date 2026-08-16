@@ -312,9 +312,18 @@
                 color: black !important;
             }
         }
+    
+        html, body {
+            height: 100vh !important;
+            max-height: 100vh !important;
+            overflow: hidden !important;
+        }
+        #sidebar-nav, #main-content-view, .main-scrollbar {
+            overscroll-behavior: contain !important;
+        }
     </style>
 </head>
-<body class="bg-[#06070b] text-zinc-100 font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-blue-600 selection:text-white relative">
+<body class="bg-[#06070b] text-zinc-100 font-sans antialiased h-screen max-h-screen flex flex-col overflow-hidden selection:bg-blue-600 selection:text-white relative">
 
     <!-- ========================================================================= -->
     <!-- ACTION TOAST NOTIFICATION CONTAINER                                       -->
