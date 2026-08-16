@@ -3490,8 +3490,7 @@ function filterPanelTable(query, tableId) {
 
 // 21. Master Routing & Panel Switching
 function switchPanel(panelKey) {
-    try { toggleMobileSidebar(false); } catch(e){}
-    currentActivePanel = panelKey;
+        currentActivePanel = panelKey;
     try { localStorage.setItem(STORAGE_KEY_ACTIVE_PANEL, panelKey); } catch(e){}
 
     document.querySelectorAll('.nav-link').forEach(link => {
