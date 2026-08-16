@@ -1451,12 +1451,38 @@ function savePanelConfigs() {
 function savePanelData() {
     try { localStorage.setItem(STORAGE_KEY_PANEL_DATA, JSON.stringify(panelData)); } catch(e){}
 }
-function getPanelConfig(key) { return panelConfigs[key] || []; }
+
+function getPanelConfig(key) { 
+    if (panelConfigs[key] && panelConfigs[key].length > 0) return panelConfigs[key];
+    if (defaultPanelConfigs[key] && defaultPanelConfigs[key].length > 0) return defaultPanelConfigs[key];
+    
+    // Generic robust fallback schema for any dynamic panel
+    return [
+        { label: 'Record Title / Name', key: 'name', type: 'text', placeholder: 'Enter name or title...', required: true },
+        { label: 'Reference Code / ID', key: 'code', type: 'text', placeholder: 'e.g. REF-2026-01', required: true },
+        { label: 'Category / Role', key: 'category', type: 'text', placeholder: 'General Assignment', required: false },
+        { label: 'Status', key: 'status', type: 'select', options: 'Active,Pending,Completed,Closed', required: true },
+        { label: 'Notes & Description', key: 'notes', type: 'text', placeholder: 'Additional details...', required: false }
+    ];
+}
+
 function getPanelRecords(key) { return panelData[key] || []; }
 function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,4); }
 
 // Master Default Schemas
 const defaultPanelConfigs = {
+
+    'project-users': [
+        { label: 'User Full Name', key: 'name', type: 'text', placeholder: 'e.g. Dana Ahmed', required: true },
+        { label: 'Login Username / ID', key: 'username', type: 'text', placeholder: 'e.g. dana_ahmed', required: true },
+        { label: 'Assigned Project', key: 'project', type: 'text', placeholder: 'e.g. Dream City Erbil', required: true },
+        { label: 'Project Role / Position', key: 'role', type: 'select', options: 'Project Manager,Site Engineer,Sales Agent,Supervisor,Accountant,Legal Advisor', required: true },
+        { label: 'Access Level', key: 'access_level', type: 'select', options: 'Full Access,Read & Edit,Read Only,Restricted', required: true },
+        { label: 'Phone Number', key: 'phone', type: 'text', placeholder: '+964 750 123 4567', required: true },
+        { label: 'Email Address', key: 'email', type: 'text', placeholder: 'dana@nashville.krd', required: false },
+        { label: 'Assignment Status', key: 'status', type: 'select', options: 'Active,Pending,Suspended,Closed', required: true }
+    ],
+
     'buy-sell-contracts': [
         { label: 'Contract Number', key: 'contract_no', type: 'text', placeholder: 'BSC-2026-001', required: true },
         { label: 'Buyer Name', key: 'buyer', type: 'text', placeholder: 'Kardo Barzanji', required: true },
